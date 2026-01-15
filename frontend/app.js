@@ -5,7 +5,6 @@
  * - Real-time Trie-based suggestions
  * - Sending messages to the backend
  * - Displaying responses with data structure labels
- * - Managing recent context display
  * 
  * NO EXTERNAL LIBRARIES USED - Pure vanilla JavaScript
  */
@@ -31,15 +30,8 @@ const elements = {
     resetButton: document.getElementById('reset-button'),
     suggestionsDropdown: document.getElementById('suggestions-dropdown'),
     suggestionsList: document.getElementById('suggestions-list'),
-    recentContext: document.getElementById('recent-context'),
-    
-    // Stats elements
-    statTrie: document.getElementById('stat-trie'),
-    statFaq: document.getElementById('stat-faq'),
-    statQueue: document.getElementById('stat-queue'),
-    statPriority: document.getElementById('stat-priority'),
-    
-    // Data structure indicators
+
+    // Data structure sidebar items
     dsTrie: document.getElementById('ds-trie'),
     dsHashmap: document.getElementById('ds-hashmap'),
     dsQueue: document.getElementById('ds-queue'),
@@ -80,11 +72,11 @@ async function apiRequest(endpoint, options = {}) {
             },
             ...options
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
@@ -110,7 +102,7 @@ function escapeHtml(text) {
 function highlightPrefix(word, prefix) {
     const prefixLower = prefix.toLowerCase();
     const wordLower = word.toLowerCase();
-    
+
     if (wordLower.startsWith(prefixLower)) {
         return `<span class="highlight">${escapeHtml(word.substring(0, prefix.length))}</span>${escapeHtml(word.substring(prefix.length))}`;
     }
@@ -128,70 +120,62 @@ function highlightPrefix(word, prefix) {
 function addMessage(text, isUser = false, meta = {}) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.textContent = isUser ? '👤' : '🤖';
-    
+
     const content = document.createElement('div');
     content.className = 'message-content';
-    
+
+    // Label
+    const label = document.createElement('div');
+    label.className = 'message-label';
+    label.textContent = isUser ? 'You' : 'System';
+
+    // Message Bubble Wrapper
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    // Text Content
     const textDiv = document.createElement('div');
     textDiv.className = 'message-text';
-    
-    // Handle newlines in text
     const paragraphs = escapeHtml(text).split('\n');
     textDiv.innerHTML = paragraphs.map(p => `<p>${p || '&nbsp;'}</p>`).join('');
-    
-    content.appendChild(textDiv);
-    
-    // Add metadata badges for bot messages
-    if (!isUser && (meta.module || meta.data_structure)) {
+
+    bubble.appendChild(textDiv);
+
+    // Metadata Badges (Bot Only)
+    if (!isUser && (meta.data_structure || meta.priority_label)) {
         const metaDiv = document.createElement('div');
         metaDiv.className = 'message-meta';
-        
-        if (meta.module) {
-            const moduleBadge = document.createElement('span');
-            moduleBadge.className = 'module-badge';
-            moduleBadge.textContent = `Module: ${meta.module}`;
-            metaDiv.appendChild(moduleBadge);
-        }
-        
+
         if (meta.data_structure) {
             const dsBadge = document.createElement('span');
             dsBadge.className = 'ds-badge';
-            dsBadge.textContent = `Data Structure: ${meta.data_structure}`;
+            dsBadge.textContent = `Used: ${meta.data_structure}`;
             metaDiv.appendChild(dsBadge);
-            
+
             // Highlight the used data structure in sidebar
             highlightDataStructure(meta.data_structure);
         }
-        
+
         if (meta.priority_label && meta.priority_label !== 'NORMAL') {
             const priorityBadge = document.createElement('span');
-            priorityBadge.className = 'priority-badge';
-            if (meta.priority_label === 'CRITICAL') {
-                priorityBadge.classList.add('critical');
-            }
+            priorityBadge.className = 'ds-badge';
             priorityBadge.textContent = `Priority: ${meta.priority_label}`;
+            priorityBadge.style.borderColor = '#ffab91';
+            priorityBadge.style.background = '#fbe9e7';
             metaDiv.appendChild(priorityBadge);
         }
-        
-        if (meta.secondary_ds) {
-            const secondaryBadge = document.createElement('span');
-            secondaryBadge.className = 'ds-badge';
-            secondaryBadge.textContent = `Also: ${meta.secondary_ds}`;
-            metaDiv.appendChild(secondaryBadge);
-        }
-        
-        content.appendChild(metaDiv);
+
+        bubble.appendChild(metaDiv);
     }
-    
-    messageDiv.appendChild(avatar);
+
+    // Assemble
+    content.appendChild(label);
+    content.appendChild(bubble);
+
     messageDiv.appendChild(content);
-    
+
     elements.chatMessages.appendChild(messageDiv);
-    
+
     // Scroll to bottom
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
 }
@@ -203,18 +187,20 @@ function addTypingIndicator() {
     const indicator = document.createElement('div');
     indicator.className = 'message bot-message';
     indicator.id = 'typing-indicator';
-    
+
     indicator.innerHTML = `
-        <div class="message-avatar">🤖</div>
         <div class="message-content">
-            <div class="message-text">
-                <div class="typing-indicator">
-                    <span></span><span></span><span></span>
+            <div class="message-label">System</div>
+            <div class="message-bubble">
+                <div class="message-text">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
                 </div>
             </div>
         </div>
     `;
-    
+
     elements.chatMessages.appendChild(indicator);
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
 }
@@ -234,14 +220,16 @@ function removeTypingIndicator() {
  * @param {string} dsName - Data structure name
  */
 function highlightDataStructure(dsName) {
+    if (!dsName) return;
+
     // Remove all highlights first
     document.querySelectorAll('.ds-item').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     // Add highlight to the matching DS
     const dsLower = dsName.toLowerCase();
-    
+
     if (dsLower.includes('trie')) {
         elements.dsTrie?.classList.add('active');
     } else if (dsLower.includes('hashmap') || dsLower.includes('dictionary')) {
@@ -249,7 +237,8 @@ function highlightDataStructure(dsName) {
     } else if (dsLower.includes('priority')) {
         elements.dsPriority?.classList.add('active');
     } else if (dsLower.includes('queue') || dsLower.includes('deque')) {
-        if (dsLower.includes('maxlen') || dsLower.includes('cache')) {
+        // Distinguish Deque vs Queue
+        if (dsLower.includes('deque') || dsLower.includes('cache')) {
             elements.dsDeque?.classList.add('active');
         } else {
             elements.dsQueue?.classList.add('active');
@@ -269,13 +258,14 @@ function showSuggestions(suggestions, prefix) {
         hideSuggestions();
         return;
     }
-    
+
     elements.suggestionsList.innerHTML = '';
-    
+
     suggestions.forEach(word => {
         const li = document.createElement('li');
         li.className = 'suggestion-item';
-        li.innerHTML = `💡 ${highlightPrefix(word, prefix)}`;
+        // Removed explicit emoji. CSS can add an icon or just plain text.
+        li.innerHTML = highlightPrefix(word, prefix);
         li.addEventListener('click', () => {
             elements.userInput.value = word;
             hideSuggestions();
@@ -283,10 +273,10 @@ function showSuggestions(suggestions, prefix) {
         });
         elements.suggestionsList.appendChild(li);
     });
-    
+
     elements.suggestionsDropdown.classList.remove('hidden');
-    
-    // Highlight Trie in sidebar
+
+    // Highlight Trie in sidebar as we are actively using it
     highlightDataStructure('Trie');
 }
 
@@ -295,45 +285,6 @@ function showSuggestions(suggestions, prefix) {
  */
 function hideSuggestions() {
     elements.suggestionsDropdown.classList.add('hidden');
-}
-
-/**
- * Update the recent context display
- * @param {array} interactions - Recent interactions
- */
-function updateRecentContext(interactions) {
-    if (!interactions || interactions.length === 0) {
-        elements.recentContext.innerHTML = '<p class="no-context">No recent interactions</p>';
-        return;
-    }
-    
-    elements.recentContext.innerHTML = interactions.map((item, idx) => `
-        <div class="context-item">
-            <span class="user-text">${idx + 1}. ${escapeHtml(item.user.substring(0, 30))}${item.user.length > 30 ? '...' : ''}</span>
-        </div>
-    `).join('');
-    
-    // Highlight Deque in sidebar
-    highlightDataStructure('Deque');
-}
-
-/**
- * Update system stats display
- * @param {object} stats - System statistics
- */
-function updateStats(stats) {
-    if (stats.trie_words !== undefined) {
-        elements.statTrie.textContent = stats.trie_words;
-    }
-    if (stats.faq_entries !== undefined) {
-        elements.statFaq.textContent = stats.faq_entries;
-    }
-    if (stats.regular_queue_size !== undefined) {
-        elements.statQueue.textContent = stats.regular_queue_size;
-    }
-    if (stats.priority_queue_size !== undefined) {
-        elements.statPriority.textContent = stats.priority_queue_size;
-    }
 }
 
 // ============ API Functions ============
@@ -347,12 +298,12 @@ const fetchSuggestions = debounce(async (prefix) => {
         hideSuggestions();
         return;
     }
-    
+
     if (prefix === state.lastPrefix) {
         return;
     }
     state.lastPrefix = prefix;
-    
+
     try {
         const data = await apiRequest(`/api/suggestions?prefix=${encodeURIComponent(prefix)}`);
         showSuggestions(data.suggestions, prefix);
@@ -370,20 +321,20 @@ async function sendMessage(message) {
     if (state.isLoading || !message.trim()) {
         return;
     }
-    
+
     state.isLoading = true;
     hideSuggestions();
-    
+
     // Add user message to chat
     addMessage(message, true);
-    
+
     // Clear input
     elements.userInput.value = '';
     state.lastPrefix = '';
-    
+
     // Show typing indicator
     addTypingIndicator();
-    
+
     try {
         const data = await apiRequest('/api/message', {
             method: 'POST',
@@ -392,9 +343,9 @@ async function sendMessage(message) {
                 user_id: CONFIG.USER_ID
             })
         });
-        
+
         removeTypingIndicator();
-        
+
         // Add bot response
         addMessage(data.response, false, {
             module: data.module,
@@ -402,45 +353,12 @@ async function sendMessage(message) {
             priority_label: data.priority_label,
             secondary_ds: data.secondary_ds
         });
-        
-        // Update recent context
-        fetchRecentContext();
-        
-        // Update stats
-        fetchStats();
-        
+
     } catch (error) {
         removeTypingIndicator();
-        addMessage('Sorry, I encountered an error. Please try again.', false, {
-            module: 'Error Handler',
-            data_structure: 'None'
-        });
+        addMessage('Sorry, I encountered an error. Please try again.', false);
     } finally {
         state.isLoading = false;
-    }
-}
-
-/**
- * Fetch recent context from backend
- */
-async function fetchRecentContext() {
-    try {
-        const data = await apiRequest('/api/context');
-        updateRecentContext(data.interactions);
-    } catch (error) {
-        console.error('Failed to fetch context:', error);
-    }
-}
-
-/**
- * Fetch system stats
- */
-async function fetchStats() {
-    try {
-        const data = await apiRequest('/api/stats');
-        updateStats(data);
-    } catch (error) {
-        console.error('Failed to fetch stats:', error);
     }
 }
 
@@ -453,29 +371,44 @@ async function resetConversation() {
             method: 'POST',
             body: JSON.stringify({ user_id: CONFIG.USER_ID })
         });
-        
+
         // Clear chat except welcome message
         const messages = elements.chatMessages.querySelectorAll('.message');
-        messages.forEach((msg, idx) => {
-            if (idx > 0) msg.remove();
-        });
-        
+        // Keep the first static welcome message? No, simpler to just clear all dynamic ones
+        // but our HTML has a hardcoded welcome message.
+        // Let's remove all added messages and add a "System Reset" message.
+
+        elements.chatMessages.innerHTML = '';
+
         // Add reset confirmation
-        addMessage('Conversation has been reset. How can I help you today?', false, {
-            module: 'Conversation Flow Module',
-            data_structure: 'Tree'
+        addMessage('System reset complete. Ready for new queries.', false, {
+            data_structure: 'System'
         });
-        
-        // Refresh context and stats
-        fetchRecentContext();
-        fetchStats();
-        
+
+        // Reset sidebar highlight
+        document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+
     } catch (error) {
         console.error('Failed to reset conversation:', error);
     }
 }
 
 // ============ Event Listeners ============
+
+// Sidebar Interaction - DS Guides
+document.querySelectorAll('.ds-item').forEach(item => {
+    item.addEventListener('click', () => {
+        // Close others
+        document.querySelectorAll('.ds-item').forEach(other => {
+            if (other !== item) {
+                other.classList.remove('expanded');
+            }
+        });
+
+        // Toggle current
+        item.classList.toggle('expanded');
+    });
+});
 
 // Input typing - trigger suggestions
 elements.userInput.addEventListener('input', (e) => {
@@ -505,7 +438,7 @@ elements.resetButton.addEventListener('click', () => {
 
 // Hide suggestions when clicking outside
 document.addEventListener('click', (e) => {
-    if (!elements.suggestionsDropdown.contains(e.target) && 
+    if (!elements.suggestionsDropdown.contains(e.target) &&
         e.target !== elements.userInput) {
         hideSuggestions();
     }
@@ -519,10 +452,7 @@ document.addEventListener('click', (e) => {
 function init() {
     console.log('Smart Customer Support System initialized');
     console.log('User ID:', CONFIG.USER_ID);
-    
-    // Fetch initial stats
-    fetchStats();
-    
+
     // Focus input
     elements.userInput.focus();
 }
