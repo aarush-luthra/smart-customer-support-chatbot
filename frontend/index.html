@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Support System</title>
+    <title>E-Shop Customer Support - 6 Data Structures Demo</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,65 +22,56 @@
             </div>
 
             <div class="sidebar-section">
-                <h2>System Architecture</h2>
+                <h2>Data Structures</h2>
                 <div class="ds-list">
-                    <div class="ds-item" id="ds-trie"
-                        data-guide="Type start of words like 'pass', 'ord', 'pay' to see real-time suggestions.">
+                    <div class="ds-item" id="ds-trie">
                         <span class="ds-icon">T</span>
                         <div class="ds-info">
                             <span class="ds-name">Trie (Prefix Tree)</span>
-                            <span class="ds-desc">Real-time Auto-complete</span>
-                            <div class="ds-guide">PRO TIP: Type 'pass', 'pay', or 'ord' to see suggestions appear
-                                instantly.</div>
+                            <span class="ds-desc">Auto-Complete Suggestions</span>
+                            <div class="ds-guide">Type "ord" or "can" to see real-time suggestions as you type.</div>
                         </div>
                     </div>
-                    <div class="ds-item" id="ds-queue"
-                        data-guide="Type 'agent' or 'support' to join the request queue.">
-                        <span class="ds-icon">Q</span>
-                        <div class="ds-info">
-                            <span class="ds-name">Queue (FIFO)</span>
-                            <span class="ds-desc">Request Processing</span>
-                            <div class="ds-guide">PRO TIP: Requests are processed in order. Type 'agent' to join the
-                                queue.</div>
-                        </div>
-                    </div>
-                    <div class="ds-item" id="ds-priority"
-                        data-guide="Type 'urgent' or 'emergency' to jump to the front of the queue.">
+                    <div class="ds-item" id="ds-hashmap">
                         <span class="ds-icon">H</span>
                         <div class="ds-info">
-                            <span class="ds-name">Priority Queue</span>
-                            <span class="ds-desc">Urgent Query Handling</span>
-                            <div class="ds-guide">PRO TIP: Type 'urgent help' or 'crash' to trigger high-priority
-                                handling.</div>
-                        </div>
-                    </div>
-                    <div class="ds-item" id="ds-hashmap"
-                        data-guide="Type exact keywords like 'pricing' or 'location' for instant O(1) answers.">
-                        <span class="ds-icon">M</span>
-                        <div class="ds-info">
                             <span class="ds-name">HashMap</span>
-                            <span class="ds-desc">O(1) Response Lookup</span>
-                            <div class="ds-guide">PRO TIP: Ask for 'pricing', 'address', or 'hours' for instant answers.
-                            </div>
+                            <span class="ds-desc">O(1) FAQ Lookup</span>
+                            <div class="ds-guide">Type "pricing", "shipping", or "hours" for instant O(1) answers.</div>
                         </div>
                     </div>
-                    <div class="ds-item" id="ds-tree"
-                        data-guide="Type 'refund' or 'technical' to start a guided conversation flow.">
-                        <span class="ds-icon">Tr</span>
+                    <div class="ds-item" id="ds-tree">
+                        <span class="ds-icon">D</span>
                         <div class="ds-info">
                             <span class="ds-name">Decision Tree</span>
                             <span class="ds-desc">Conversation Flow</span>
-                            <div class="ds-guide">PRO TIP: Type 'refund' or 'booking' to enter a decision tree flow.
+                            <div class="ds-guide">Type "orders" or "returns" to navigate branching conversation paths.
                             </div>
                         </div>
                     </div>
-                    <div class="ds-item" id="ds-deque"
-                        data-guide="I remember your last 5 messages. Ask 'what did I just say?'.">
-                        <span class="ds-icon">D</span>
+                    <div class="ds-item" id="ds-stack">
+                        <span class="ds-icon">S</span>
                         <div class="ds-info">
-                            <span class="ds-name">Deque</span>
-                            <span class="ds-desc">Recent History Cache</span>
-                            <div class="ds-guide">PRO TIP: I remember context. Ask 'What was my last message?'.</div>
+                            <span class="ds-name">Stack</span>
+                            <span class="ds-desc">Go Back Navigation</span>
+                            <div class="ds-guide">Navigate into menus, then type "back" to return to previous state.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-unionfind">
+                        <span class="ds-icon">U</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Union-Find</span>
+                            <span class="ds-desc">Synonym Grouping</span>
+                            <div class="ds-guide">"cancel order" = "stop order" = "abort" → same handler.</div>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-graph">
+                        <span class="ds-icon">G</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Weighted Graph</span>
+                            <span class="ds-desc">Next Best Actions</span>
+                            <div class="ds-guide">See "Quick Actions" suggestions based on weighted probabilities.</div>
                         </div>
                     </div>
                 </div>
@@ -98,7 +89,7 @@
                 <header class="chat-header">
                     <div class="header-content">
                         <h2>Support Assistant</h2>
-                        <p>Powered by Advanced Data Structures</p>
+                        <p>Demonstrating 6 Data Structures</p>
                     </div>
                     <button id="reset-button" class="btn-icon" title="Reset Conversation">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -116,11 +107,12 @@
                             <div class="message-label">System</div>
                             <div class="message-bubble">
                                 <div class="message-text">
-                                    <p>Hello! I'm your Customer Support Assistant.</p>
-                                    <p>I use various data structures to help you efficiently. Ask me anything!</p>
+                                    <p>Welcome to Customer Support.</p>
+                                    <p>I'm here to assist you with orders, returns, account inquiries, and more.</p>
+                                    <p>How may I help you today?</p>
                                 </div>
                                 <div class="message-meta">
-                                    <span class="ds-badge">Welcome Message</span>
+                                    <span class="ds-badge">Welcome</span>
                                 </div>
                             </div>
                         </div>

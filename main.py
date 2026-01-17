@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
-Smart Customer Support System - Main Entry Point
+E-Commerce Customer Support Chatbot - Main Entry Point
 
-This is the main entry point for the Smart Customer Support System.
-It starts the HTTP server and serves the frontend and API endpoints.
+Demonstrates 6 Data Structures in a practical chatbot:
+
+DATA STRUCTURES:
+    1. Trie (Prefix Tree) - Auto-complete suggestions
+    2. HashMap (Dictionary) - O(1) FAQ lookups
+    3. Decision Tree - Conversation flow with branching
+    4. Stack - "Go back" navigation
+    5. Union-Find (Disjoint Set) - Synonym intent grouping
+    6. Weighted Graph - Next best action suggestions
 
 USAGE:
     python3 main.py
     
 Then open: http://localhost:8000
 
-DATA STRUCTURES DEMONSTRATED:
-    1. Trie (Prefix Tree) - Real-time keyword suggestions
-    2. Queue (deque) - FIFO query management
-    3. Priority Queue (heapq) - Urgent query prioritization
-    4. HashMap (dict) - O(1) FAQ response lookup
-    5. Tree - Structured conversation flow
-    6. Deque (bounded) - Recent interaction cache
-
-Author: Smart Customer Support System
+Author: E-Shop Customer Support System
 """
+
 
 import sys
 import os
