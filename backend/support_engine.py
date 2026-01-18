@@ -1,25 +1,28 @@
 """
 Support Engine - Main Orchestrator for the Customer Support System
 
-This module coordinates all 6 data structures:
+This module coordinates all 7 data structures:
 1. Trie - Auto-complete suggestions
 2. HashMap - O(1) FAQ lookups
 3. Decision Tree - Conversation flow with branching
 4. Stack - "Go back" navigation
 5. Union-Find - Synonym intent grouping
 6. Weighted Graph - Next best action suggestions
+7. OrderDatabase - O(1) order lookup
 
 Author: Customer Support System
 """
 
 from typing import Dict, Any, List, Optional
+import re
 from backend.data_structures import (
     Trie,
     FAQHashMap,
     DecisionTree,
     ConversationStack,
     UnionFind,
-    WeightedGraph
+    WeightedGraph,
+    OrderDatabase
 )
 
 
@@ -27,7 +30,7 @@ class SupportEngine:
     """
     Main orchestrator for the customer support system.
     
-    Coordinates all 6 data structures to provide intelligent responses.
+    Coordinates all 7 data structures to provide intelligent responses.
     """
     
     def __init__(self):
@@ -49,6 +52,9 @@ class SupportEngine:
         
         # DS 6: Weighted Graph for next actions
         self._action_graph = WeightedGraph()
+        
+        # DS 7: OrderDatabase for order lookup
+        self._order_db = OrderDatabase()
         
         # Initialize all content
         self._populate_trie()
@@ -236,8 +242,10 @@ class SupportEngine:
             "- Your Order ID (e.g., ORD-12345)\n"
             "- Or the email used for the order\n\n"
             "Tip: Check your confirmation email for the Order ID.\n\n"
-            "Type 'back' to return to Orders menu.",
-            options={"back": "orders_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Orders menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "orders_menu", "orders": "orders_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -249,8 +257,10 @@ class SupportEngine:
             "- Orders can only be cancelled before shipping\n"
             "- Refund will be processed in 5-7 days\n\n"
             "Please provide your Order ID to proceed.\n\n"
-            "Type 'back' to return to Orders menu.",
-            options={"back": "orders_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Orders menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "orders_menu", "orders": "orders_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -263,8 +273,11 @@ class SupportEngine:
             "- Add gift wrapping\n\n"
             "Note: Modifications only available before shipping.\n\n"
             "Please provide your Order ID.\n\n"
-            "Type 'back' to return to Orders menu.",
-            options={"back": "orders_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Orders menu\n"
+            "- Type 'menu' → Main menu\n"
+            "- Type 'chat' → Live agent",
+            options={"back": "orders_menu", "orders": "orders_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -297,8 +310,10 @@ class SupportEngine:
             "2. Select items to return\n"
             "3. Choose refund method\n\n"
             "Return window: 30 days from delivery.\n\n"
-            "Type 'back' to return to Returns menu.",
-            options={"back": "returns_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Returns menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "returns_menu", "returns": "returns_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -309,8 +324,10 @@ class SupportEngine:
             "- Return shipment status\n"
             "- Refund processing status\n"
             "- Expected refund date\n\n"
-            "Type 'back' to return to Returns menu.",
-            options={"back": "returns_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Returns menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "returns_menu", "returns": "returns_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -325,8 +342,10 @@ class SupportEngine:
             "Not allowed:\n"
             "- Final sale items non-returnable\n"
             "- Items must be unused with tags\n\n"
-            "Type 'back' to return to Returns menu.",
-            options={"back": "returns_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Returns menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "returns_menu", "returns": "returns_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -360,8 +379,10 @@ class SupportEngine:
             "3. Check email for reset link\n"
             "4. Create new password\n\n"
             "Password must be 8+ characters.\n\n"
-            "Type 'back' to return to Account menu.",
-            options={"back": "account_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Account menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "account_menu", "account": "account_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -374,8 +395,10 @@ class SupportEngine:
             "- Payment methods\n"
             "- Communication preferences\n\n"
             "Go to Account > Profile Settings\n\n"
-            "Type 'back' to return to Account menu.",
-            options={"back": "account_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Account menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "account_menu", "account": "account_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -388,8 +411,10 @@ class SupportEngine:
             "- Reorder past items\n"
             "- Download invoices\n"
             "- Start returns\n\n"
-            "Type 'back' to return to Account menu.",
-            options={"back": "account_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Account menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "account_menu", "account": "account_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -424,8 +449,10 @@ class SupportEngine:
             "- Gold: 10% off\n"
             "- Platinum: 15% off\n\n"
             "Type a product name to check its price!\n\n"
-            "Type 'back' to return to Products menu.",
-            options={"back": "products_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Products menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "products_menu", "products": "products_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -437,8 +464,10 @@ class SupportEngine:
             "- Low Stock: Only a few left\n"
             "- Pre-order: Coming soon\n"
             "- Out of Stock: Sign up for alerts\n\n"
-            "Type 'back' to return to Products menu.",
-            options={"back": "products_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Products menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "products_menu", "products": "products_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -450,8 +479,10 @@ class SupportEngine:
             "- FREESHIP: Free shipping\n"
             "- NEWUSER: 15% off first order\n\n"
             "Subscribe to our newsletter for exclusive deals!\n\n"
-            "Type 'back' to return to Products menu.",
-            options={"back": "products_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Products menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "products_menu", "products": "products_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
             is_leaf=True
         )
         
@@ -486,8 +517,10 @@ class SupportEngine:
             "- Saturday: 10 AM - 6 PM EST\n"
             "- Sunday: Closed\n\n"
             "Average wait time: 5 minutes\n\n"
-            "Type 'back' to return to Contact menu.",
-            options={"back": "contact_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Contact menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "contact_menu", "contact": "contact_menu", "menu": "root"},
             is_leaf=True
         )
         
@@ -500,8 +533,10 @@ class SupportEngine:
             "- Urgent issues: 4-6 hours\n"
             "- Order problems: Same business day\n\n"
             "Include your Order ID for faster help!\n\n"
-            "Type 'back' to return to Contact menu.",
-            options={"back": "contact_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Contact menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "contact_menu", "contact": "contact_menu", "menu": "root"},
             is_leaf=True
         )
         
@@ -513,8 +548,10 @@ class SupportEngine:
             "Wait time: ~2 minutes\n\n"
             "A human agent will join this chat shortly...\n\n"
             "(This is a demo - no actual agent will connect)\n\n"
-            "Type 'back' to return to Contact menu.",
-            options={"back": "contact_menu", "menu": "root"},
+            "**Navigation:**\n"
+            "- Type 'back' → Contact menu\n"
+            "- Type 'menu' → Main menu",
+            options={"back": "contact_menu", "contact": "contact_menu", "menu": "root"},
             is_leaf=True
         )
     
@@ -740,6 +777,62 @@ class SupportEngine:
             "data_structure": "Weighted Graph"
         }
     
+    def _get_completion_nav_actions(self, current_state: str) -> List[Dict[str, Any]]:
+        """
+        Get navigation actions after completing an action (like viewing order details).
+        Shows options to go back to parent menu or main menu.
+        """
+        # Map leaf nodes to their parent menus
+        parent_map = {
+            # Orders
+            "order_track": ("orders_menu", "Orders Menu"),
+            "order_cancel": ("orders_menu", "Orders Menu"),
+            "order_modify": ("orders_menu", "Orders Menu"),
+            # Returns
+            "return_start": ("returns_menu", "Returns Menu"),
+            "return_status": ("returns_menu", "Returns Menu"),
+            "return_policy": ("returns_menu", "Returns Menu"),
+            # Account
+            "account_password": ("account_menu", "Account Menu"),
+            "account_profile": ("account_menu", "Account Menu"),
+            "account_orders": ("account_menu", "Account Menu"),
+            # Products
+            "products_pricing": ("products_menu", "Products Menu"),
+            "products_stock": ("products_menu", "Products Menu"),
+            "products_deals": ("products_menu", "Products Menu"),
+            # Contact
+            "contact_phone": ("contact_menu", "Contact Menu"),
+            "contact_email": ("contact_menu", "Contact Menu"),
+            "contact_chat": ("contact_menu", "Contact Menu"),
+        }
+        
+        nav_actions = []
+        
+        # Add "Back to Parent" option
+        if current_state in parent_map:
+            parent_id, parent_name = parent_map[current_state]
+            nav_actions.append({
+                "action": parent_id,
+                "label": f"Back to {parent_name.split()[0]}",
+                "weight": 0.45
+            })
+        
+        # Add "Main Menu" option
+        nav_actions.append({
+            "action": "root",
+            "label": "Main Menu",
+            "weight": 0.35
+        })
+        
+        # Add "Chat with Agent" option
+        nav_actions.append({
+            "action": "contact_chat",
+            "label": "Chat with Agent",
+            "weight": 0.20
+        })
+        
+        return nav_actions
+    
     # =========================================================================
     # MAIN MESSAGE PROCESSING
     # =========================================================================
@@ -754,6 +847,7 @@ class SupportEngine:
         3. Navigate conversation (Decision Tree)
         4. Track history (Stack)
         5. Suggest next actions (Weighted Graph)
+        6. Check for Order ID (OrderDatabase)
         """
         message = message.strip()
         if not message:
@@ -801,6 +895,45 @@ class SupportEngine:
                     node_id="root",
                     stack_size=1
                 )
+        
+        # Get current state for context-aware lookups
+        current_state = self._decision_tree.get_current_state(user_id)
+        
+        # DS 7: Check for tracking number first (if at order_track node)
+        if current_state == "order_track":
+            tracking_number = self._check_for_tracking_number(message)
+            if tracking_number:
+                tracking_result = self.lookup_tracking(tracking_number)
+                data_structures_used.append("OrderDatabase")
+                
+                # Show navigation options after completing action
+                nav_actions = self._get_completion_nav_actions(current_state)
+                
+                return self._create_response(
+                    tracking_result["response"],
+                    "Tracking Lookup",
+                    ", ".join(data_structures_used),
+                    order_found=tracking_result["success"],
+                    next_actions=nav_actions
+                )
+        
+        # DS 7: Check for Order ID pattern - uses OrderDatabase (HashMap)
+        order_id = self._check_for_order_id(message)
+        if order_id:
+            # Use context for appropriate response format
+            order_result = self.lookup_order(order_id, context=current_state)
+            data_structures_used.append("OrderDatabase")
+            
+            # Show navigation options after completing action
+            nav_actions = self._get_completion_nav_actions(current_state)
+            
+            return self._create_response(
+                order_result["response"],
+                "Order Lookup",
+                ", ".join(data_structures_used),
+                order_found=order_result["success"],
+                next_actions=nav_actions
+            )
         
         # DS 5: Normalize intent using Union-Find
         intent_result = self.normalize_intent(message)
@@ -869,6 +1002,107 @@ class SupportEngine:
         result.update(kwargs)
         return result
     
+    # =========================================================================
+    # DATA STRUCTURE 7: ORDER DATABASE - Order Lookup
+    # =========================================================================
+    
+    def lookup_order(self, order_id: str, context: str = "general") -> Dict[str, Any]:
+        """
+        Look up an order by ID.
+        
+        DATA STRUCTURE: HashMap (O(1) lookup)
+        
+        Args:
+            order_id: Order ID or tracking number
+            context: Current context (e.g., "order_track" for tracking-focused response)
+        """
+        order = self._order_db.get_order(order_id)
+        
+        if order:
+            # Use tracking-focused response if at track order node
+            if context == "order_track":
+                response = self._order_db.format_tracking_response(order)
+            else:
+                response = self._order_db.format_order_response(order)
+            
+            return {
+                "success": True,
+                "order": order,
+                "response": response,
+                "data_structure": "HashMap (OrderDatabase)"
+            }
+        else:
+            # Return list of valid order IDs for demo
+            valid_ids = self._order_db.get_all_order_ids()
+            return {
+                "success": False,
+                "response": f"Order not found. Try one of these demo orders:\n" + 
+                           "\n".join(f"- {oid}" for oid in valid_ids),
+                "valid_order_ids": valid_ids,
+                "data_structure": "HashMap (OrderDatabase)"
+            }
+    
+    def lookup_tracking(self, tracking_number: str) -> Dict[str, Any]:
+        """
+        Look up an order by tracking number.
+        
+        DATA STRUCTURE: HashMap (O(n) lookup - scans for tracking match)
+        """
+        order = self._order_db.get_by_tracking(tracking_number)
+        
+        if order:
+            return {
+                "success": True,
+                "order": order,
+                "response": self._order_db.format_tracking_response(order),
+                "data_structure": "HashMap (OrderDatabase)"
+            }
+        else:
+            return {
+                "success": False,
+                "response": f"Tracking number not found: {tracking_number}\n\n"
+                           "Try these demo tracking numbers:\n"
+                           "- 1Z999AA10123456784 (Shipped)\n"
+                           "- 1Z999AA10123456001 (Delivered)\n"
+                           "- 1Z999AA10123456002 (Out for Delivery)",
+                "data_structure": "HashMap (OrderDatabase)"
+            }
+    
+    def _check_for_order_id(self, message: str) -> Optional[str]:
+        """Check if message contains an order ID pattern."""
+        # Pattern: ORD-XXXXX or just XXXXX (5 digits)
+        patterns = [
+            r'\bORD-(\d{5})\b',  # ORD-12345
+            r'\bord-(\d{5})\b',  # ord-12345 (lowercase)
+            r'\b(\d{5})\b',      # Just 5 digits
+        ]
+        
+        message_upper = message.upper()
+        
+        for pattern in patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                digits = match.group(1) if '(' in pattern else match.group(0)
+                return f"ORD-{digits}" if not message_upper.startswith("ORD-") else message_upper.split()[0]
+        
+        # Also check for exact match with ORD prefix
+        if "ORD-" in message_upper:
+            parts = message_upper.split()
+            for part in parts:
+                if part.startswith("ORD-"):
+                    return part
+        
+        return None
+    
+    def _check_for_tracking_number(self, message: str) -> Optional[str]:
+        """Check if message contains a tracking number pattern."""
+        # UPS-style tracking: 1Z followed by alphanumeric
+        ups_pattern = r'\b1Z[A-Z0-9]{16}\b'
+        match = re.search(ups_pattern, message.upper())
+        if match:
+            return match.group(0)
+        return None
+    
     def reset_conversation(self, user_id: str) -> Dict[str, Any]:
         """Reset conversation for user."""
         self._decision_tree.reset(user_id)
@@ -891,9 +1125,11 @@ class SupportEngine:
             "faq_entries": self._faq_map.size(),
             "tree_nodes": len(self._decision_tree.nodes),
             "active_sessions": len(self._user_stacks),
+            "order_count": self._order_db.size(),
             "data_structures": [
                 "Trie", "HashMap", "Decision Tree", 
-                "Stack", "Union-Find", "Weighted Graph"
+                "Stack", "Union-Find", "Weighted Graph",
+                "OrderDatabase"
             ]
         }
 

@@ -1,13 +1,14 @@
 """
 Data Structures Module for E-Commerce Customer Support Chatbot
 
-This module contains 6 core data structure implementations:
+This module contains 7 core data structure implementations:
 1. Trie - Auto-complete suggestions
 2. HashMap (FAQHashMap) - O(1) FAQ lookups  
 3. DecisionTree - Conversation flow with branching
 4. Stack - "Go back" navigation
 5. UnionFind - Synonym intent grouping
 6. WeightedGraph - Next best action suggestions
+7. OrderDatabase - O(1) order lookup by ID
 
 Author: Smart Customer Support System
 """
@@ -579,3 +580,217 @@ class WeightedGraph:
         if node_id not in self.graph:
             return []
         return [edge[0] for edge in self.graph[node_id]]
+
+
+# =============================================================================
+# DATA STRUCTURE 7: ORDER DATABASE (HashMap) - Order Lookup
+# =============================================================================
+
+class OrderDatabase:
+    """
+    HashMap-based Order Database for order lookup simulation.
+    
+    DATA STRUCTURE: HashMap (Python dict)
+    
+    WHY HASHMAP FOR ORDERS:
+    1. O(1) lookup by Order ID
+    2. Real-world simulation of order management
+    3. Demonstrates key-value storage
+    
+    OPERATIONS:
+    - add_order(): O(1)
+    - get_order(): O(1)
+    - update_status(): O(1)
+    """
+    
+    def __init__(self):
+        self._orders: Dict[str, Dict[str, Any]] = {}
+        self._populate_sample_orders()
+    
+    def _populate_sample_orders(self) -> None:
+        """Add sample orders for demo."""
+        sample_orders = [
+            {
+                "order_id": "ORD-12345",
+                "customer_name": "John Smith",
+                "items": ["Wireless Headphones", "Phone Case"],
+                "total": 89.99,
+                "status": "Shipped",
+                "tracking": "1Z999AA10123456784",
+                "order_date": "2026-01-15",
+                "estimated_delivery": "2026-01-20"
+            },
+            {
+                "order_id": "ORD-67890",
+                "customer_name": "Sarah Johnson",
+                "items": ["Laptop Stand", "USB-C Hub", "Webcam"],
+                "total": 156.50,
+                "status": "Processing",
+                "tracking": None,
+                "order_date": "2026-01-17",
+                "estimated_delivery": "2026-01-24"
+            },
+            {
+                "order_id": "ORD-11111",
+                "customer_name": "Mike Brown",
+                "items": ["Gaming Mouse"],
+                "total": 49.99,
+                "status": "Delivered",
+                "tracking": "1Z999AA10123456001",
+                "order_date": "2026-01-10",
+                "estimated_delivery": "2026-01-14",
+                "delivered_date": "2026-01-13"
+            },
+            {
+                "order_id": "ORD-22222",
+                "customer_name": "Emily Davis",
+                "items": ["Mechanical Keyboard", "Desk Mat"],
+                "total": 124.00,
+                "status": "Out for Delivery",
+                "tracking": "1Z999AA10123456002",
+                "order_date": "2026-01-16",
+                "estimated_delivery": "2026-01-18"
+            },
+            {
+                "order_id": "ORD-33333",
+                "customer_name": "Alex Wilson",
+                "items": ["Monitor Light Bar", "Cable Management Kit"],
+                "total": 78.99,
+                "status": "Cancelled",
+                "tracking": None,
+                "order_date": "2026-01-14",
+                "cancelled_date": "2026-01-15",
+                "refund_status": "Processed"
+            }
+        ]
+        
+        for order in sample_orders:
+            self._orders[order["order_id"]] = order
+            # Also index by lowercase
+            self._orders[order["order_id"].lower()] = order
+    
+    def get_order(self, order_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Look up order by ID. O(1) time.
+        
+        Args:
+            order_id: The order ID (e.g., "ORD-12345")
+            
+        Returns:
+            Order details dict or None if not found
+        """
+        # Clean the order ID
+        clean_id = order_id.strip().upper()
+        
+        # Try exact match
+        if clean_id in self._orders:
+            return self._orders[clean_id].copy()
+        
+        # Try with ORD- prefix
+        if not clean_id.startswith("ORD-"):
+            prefixed = f"ORD-{clean_id}"
+            if prefixed in self._orders:
+                return self._orders[prefixed].copy()
+        
+        return None
+    
+    def add_order(self, order: Dict[str, Any]) -> bool:
+        """Add a new order. O(1) time."""
+        if "order_id" not in order:
+            return False
+        self._orders[order["order_id"]] = order
+        self._orders[order["order_id"].lower()] = order
+        return True
+    
+    def update_status(self, order_id: str, new_status: str) -> bool:
+        """Update order status. O(1) time."""
+        order = self.get_order(order_id)
+        if order:
+            self._orders[order["order_id"]]["status"] = new_status
+            return True
+        return False
+    
+    def get_by_tracking(self, tracking_number: str) -> Optional[Dict[str, Any]]:
+        """
+        Look up order by tracking number. O(n) time.
+        
+        Args:
+            tracking_number: UPS/FedEx tracking number
+            
+        Returns:
+            Order details dict or None if not found
+        """
+        tracking_number = tracking_number.strip().upper()
+        for order in self._orders.values():
+            if order.get("tracking") and order["tracking"].upper() == tracking_number:
+                return order.copy()
+        return None
+    
+    def format_order_response(self, order: Dict[str, Any]) -> str:
+        """Format order as readable response."""
+        items_str = ", ".join(order["items"])
+        
+        response = f"""**Order Details**
+
+**Order ID:** {order['order_id']}
+**Status:** {order['status']}
+**Items:** {items_str}
+**Total:** ${order['total']:.2f}
+**Order Date:** {order['order_date']}"""
+        
+        if order.get("tracking"):
+            response += f"\n**Tracking:** {order['tracking']}"
+        
+        if order["status"] == "Delivered":
+            response += f"\n**Delivered:** {order.get('delivered_date', 'N/A')}"
+        elif order["status"] == "Cancelled":
+            response += f"\n**Cancelled:** {order.get('cancelled_date', 'N/A')}"
+            response += f"\n**Refund:** {order.get('refund_status', 'Pending')}"
+        else:
+            response += f"\n**Est. Delivery:** {order.get('estimated_delivery', 'N/A')}"
+        
+        return response
+    
+    def format_tracking_response(self, order: Dict[str, Any]) -> str:
+        """Format order as tracking-focused response."""
+        response = f"""**Tracking Information**
+
+**Order ID:** {order['order_id']}
+**Tracking Number:** {order.get('tracking', 'Not yet assigned')}
+**Status:** {order['status']}
+
+**Shipping Updates:**"""
+        
+        # Generate dummy tracking history based on status
+        if order["status"] == "Delivered":
+            response += f"""
+- {order.get('delivered_date', 'N/A')} - Delivered to recipient
+- {order['order_date']} - Package picked up
+- {order['order_date']} - Shipping label created"""
+        elif order["status"] == "Out for Delivery":
+            response += f"""
+- Today - Out for delivery
+- Yesterday - Arrived at local facility
+- {order['order_date']} - Package picked up"""
+        elif order["status"] == "Shipped":
+            response += f"""
+- In transit to destination
+- {order['order_date']} - Package picked up
+- {order['order_date']} - Shipping label created"""
+        elif order["status"] == "Processing":
+            response += "\n- Order is being prepared for shipment"
+        else:
+            response += "\n- No tracking updates available"
+        
+        if order.get("estimated_delivery"):
+            response += f"\n\n**Estimated Delivery:** {order['estimated_delivery']}"
+        
+        return response
+    
+    def get_all_order_ids(self) -> List[str]:
+        """Get list of all order IDs."""
+        return [k for k in self._orders.keys() if k.startswith("ORD-")]
+    
+    def size(self) -> int:
+        """Return number of orders."""
+        return len(self.get_all_order_ids())

@@ -137,8 +137,19 @@ function addMessage(text, isUser = false, meta = {}) {
             const percentage = Math.round(action.weight * 100);
             btn.innerHTML = `${action.label} <span class="action-weight">(${percentage}%)</span>`;
             btn.addEventListener('click', () => {
-                // Extract first word from label as the command (e.g., "Track Order" -> "track")
-                const command = action.label.split(' ')[0].toLowerCase();
+                // Extract keyword from action ID (e.g., "products_pricing" -> "pricing", "order_track" -> "track")
+                // Or from label if action ID doesn't have underscore (e.g., "root" -> use label)
+                let command;
+                if (action.action && action.action.includes('_')) {
+                    // Get the last part after underscore: "products_pricing" -> "pricing"
+                    const parts = action.action.split('_');
+                    command = parts[parts.length - 1];
+                } else if (action.action === 'root') {
+                    command = 'menu';
+                } else {
+                    // Fallback: use first word of label lowercase
+                    command = action.label.split(' ')[0].toLowerCase();
+                }
                 sendMessage(command);
             });
             buttonsDiv.appendChild(btn);

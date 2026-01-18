@@ -80,19 +80,15 @@ class SupportHandler(BaseHTTPRequestHandler):
             result = engine.get_suggestions(prefix)
             self._send_json(result)
         
-        elif path == "/api/context":
-            # Get recent interaction context
-            result = engine.get_recent_context()
+        elif path == "/api/order":
+            # Look up order from OrderDatabase (HashMap)
+            order_id = query_params.get("order_id", [""])[0]
+            result = engine.lookup_order(order_id)
             self._send_json(result)
         
         elif path == "/api/stats":
             # Get system statistics
             result = engine.get_system_stats()
-            self._send_json(result)
-        
-        elif path == "/api/queue":
-            # Get queue status
-            result = engine.get_queue_status()
             self._send_json(result)
         
         else:
@@ -194,7 +190,7 @@ def run_server(host: str = "localhost", port: int = 8000):
     
     print("=" * 60)
     print("   E-SHOP CUSTOMER SUPPORT CHATBOT")
-    print("   Demonstrating 6 Data Structures in Action")
+    print("   Demonstrating 7 Data Structures in Action")
     print("=" * 60)
     print()
     print(f"   Server running at: http://{host}:{port}")
@@ -206,6 +202,9 @@ def run_server(host: str = "localhost", port: int = 8000):
     print("   4. Stack - Go back navigation")
     print("   5. Union-Find - Synonym intent grouping")
     print("   6. Weighted Graph - Next best actions")
+    print("   7. OrderDatabase (HashMap) - O(1) order lookup")
+    print()
+    print("   Demo Order IDs: ORD-12345, ORD-67890, ORD-11111")
     print()
     print("   Press Ctrl+C to stop the server")
     print("=" * 60)
