@@ -470,3 +470,55 @@ body {
         transform: scale(1);
     }
 }
+
+/* Quick Action Buttons (Weighted Graph) */
+.quick-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.quick-actions-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.quick-actions-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quick-action-btn:hover {
+    background: var(--text-primary);
+    color: #ffffff;
+    border-color: var(--text-primary);
+}
+
+.quick-action-btn:hover .action-weight {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.action-weight {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+}

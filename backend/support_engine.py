@@ -592,51 +592,138 @@ class SupportEngine:
         """Build weighted graph for next action suggestions."""
         g = self._action_graph
         
-        # From root/main menu
+        # ===== ROOT / MAIN MENU =====
         g.add_node("root", "Main Menu")
-        g.add_edge("root", "orders_menu", 0.4, "Check Orders")
+        g.add_edge("root", "orders_menu", 0.35, "Check Orders")
         g.add_edge("root", "returns_menu", 0.25, "Returns & Refunds")
-        g.add_edge("root", "products_menu", 0.2, "Browse Products")
-        g.add_edge("root", "contact_menu", 0.15, "Contact Support")
+        g.add_edge("root", "account_menu", 0.20, "Account Help")
+        g.add_edge("root", "products_menu", 0.12, "Products & Pricing")
+        g.add_edge("root", "contact_menu", 0.08, "Contact Support")
         
-        # From orders menu
+        # ===== ORDERS MENU =====
         g.add_node("orders_menu", "Orders")
-        g.add_edge("orders_menu", "order_track", 0.5, "Track Order")
-        g.add_edge("orders_menu", "order_cancel", 0.3, "Cancel Order")
+        g.add_edge("orders_menu", "order_track", 0.50, "Track Order")
+        g.add_edge("orders_menu", "order_cancel", 0.30, "Cancel Order")
         g.add_edge("orders_menu", "order_modify", 0.15, "Modify Order")
-        g.add_edge("orders_menu", "root", 0.05, "Main Menu")
+        g.add_edge("orders_menu", "root", 0.05, "Back to Menu")
         
-        # From order tracking
+        # Order Track
         g.add_node("order_track", "Track Order")
-        g.add_edge("order_track", "contact_chat", 0.4, "Chat with Agent")
-        g.add_edge("order_track", "order_cancel", 0.3, "Cancel Order")
-        g.add_edge("order_track", "orders_menu", 0.3, "Back to Orders")
+        g.add_edge("order_track", "contact_chat", 0.40, "Chat with Agent")
+        g.add_edge("order_track", "order_cancel", 0.30, "Cancel Order")
+        g.add_edge("order_track", "orders_menu", 0.30, "Back to Orders")
         
-        # From order cancel
+        # Order Cancel
         g.add_node("order_cancel", "Cancel Order")
-        g.add_edge("order_cancel", "return_start", 0.4, "Start Return Instead")
-        g.add_edge("order_cancel", "contact_chat", 0.35, "Need Help?")
+        g.add_edge("order_cancel", "return_start", 0.40, "Start Return")
+        g.add_edge("order_cancel", "contact_chat", 0.35, "Chat with Agent")
         g.add_edge("order_cancel", "orders_menu", 0.25, "Back to Orders")
         
-        # From returns menu
+        # Order Modify
+        g.add_node("order_modify", "Modify Order")
+        g.add_edge("order_modify", "contact_chat", 0.45, "Chat with Agent")
+        g.add_edge("order_modify", "order_track", 0.30, "Track Order")
+        g.add_edge("order_modify", "orders_menu", 0.25, "Back to Orders")
+        
+        # ===== RETURNS MENU =====
         g.add_node("returns_menu", "Returns")
         g.add_edge("returns_menu", "return_start", 0.45, "Start Return")
-        g.add_edge("returns_menu", "return_status", 0.35, "Check Status")
+        g.add_edge("returns_menu", "return_status", 0.30, "Check Status")
         g.add_edge("returns_menu", "return_policy", 0.15, "View Policy")
-        g.add_edge("returns_menu", "root", 0.05, "Main Menu")
+        g.add_edge("returns_menu", "root", 0.10, "Back to Menu")
         
-        # From return start
+        # Return Start
         g.add_node("return_start", "Start Return")
-        g.add_edge("return_start", "return_status", 0.4, "Track Return")
-        g.add_edge("return_start", "contact_chat", 0.35, "Need Help?")
+        g.add_edge("return_start", "return_status", 0.40, "Check Status")
+        g.add_edge("return_start", "contact_chat", 0.35, "Chat with Agent")
         g.add_edge("return_start", "returns_menu", 0.25, "Back to Returns")
         
-        # From contact menu
+        # Return Status
+        g.add_node("return_status", "Return Status")
+        g.add_edge("return_status", "contact_chat", 0.50, "Chat with Agent")
+        g.add_edge("return_status", "return_policy", 0.25, "View Policy")
+        g.add_edge("return_status", "returns_menu", 0.25, "Back to Returns")
+        
+        # Return Policy
+        g.add_node("return_policy", "Return Policy")
+        g.add_edge("return_policy", "return_start", 0.50, "Start Return")
+        g.add_edge("return_policy", "contact_chat", 0.25, "Chat with Agent")
+        g.add_edge("return_policy", "returns_menu", 0.25, "Back to Returns")
+        
+        # ===== ACCOUNT MENU =====
+        g.add_node("account_menu", "Account")
+        g.add_edge("account_menu", "account_password", 0.40, "Reset Password")
+        g.add_edge("account_menu", "account_profile", 0.30, "Update Profile")
+        g.add_edge("account_menu", "account_orders", 0.20, "Order History")
+        g.add_edge("account_menu", "root", 0.10, "Back to Menu")
+        
+        # Account Password
+        g.add_node("account_password", "Password Reset")
+        g.add_edge("account_password", "contact_chat", 0.45, "Chat with Agent")
+        g.add_edge("account_password", "account_profile", 0.30, "Update Profile")
+        g.add_edge("account_password", "account_menu", 0.25, "Back to Account")
+        
+        # Account Profile
+        g.add_node("account_profile", "Update Profile")
+        g.add_edge("account_profile", "account_password", 0.35, "Reset Password")
+        g.add_edge("account_profile", "account_orders", 0.35, "Order History")
+        g.add_edge("account_profile", "account_menu", 0.30, "Back to Account")
+        
+        # Account Orders
+        g.add_node("account_orders", "Order History")
+        g.add_edge("account_orders", "orders_menu", 0.45, "Manage Orders")
+        g.add_edge("account_orders", "return_start", 0.30, "Start Return")
+        g.add_edge("account_orders", "account_menu", 0.25, "Back to Account")
+        
+        # ===== PRODUCTS MENU =====
+        g.add_node("products_menu", "Products")
+        g.add_edge("products_menu", "products_pricing", 0.40, "View Pricing")
+        g.add_edge("products_menu", "products_deals", 0.35, "Current Deals")
+        g.add_edge("products_menu", "products_stock", 0.15, "Check Stock")
+        g.add_edge("products_menu", "root", 0.10, "Back to Menu")
+        
+        # Products Pricing
+        g.add_node("products_pricing", "Pricing")
+        g.add_edge("products_pricing", "products_deals", 0.45, "Current Deals")
+        g.add_edge("products_pricing", "products_stock", 0.30, "Check Stock")
+        g.add_edge("products_pricing", "products_menu", 0.25, "Back to Products")
+        
+        # Products Stock
+        g.add_node("products_stock", "Stock")
+        g.add_edge("products_stock", "products_pricing", 0.40, "View Pricing")
+        g.add_edge("products_stock", "contact_chat", 0.35, "Chat with Agent")
+        g.add_edge("products_stock", "products_menu", 0.25, "Back to Products")
+        
+        # Products Deals
+        g.add_node("products_deals", "Deals")
+        g.add_edge("products_deals", "products_pricing", 0.40, "View Pricing")
+        g.add_edge("products_deals", "orders_menu", 0.35, "Place Order")
+        g.add_edge("products_deals", "products_menu", 0.25, "Back to Products")
+        
+        # ===== CONTACT MENU =====
         g.add_node("contact_menu", "Contact")
-        g.add_edge("contact_menu", "contact_chat", 0.5, "Live Chat")
-        g.add_edge("contact_menu", "contact_phone", 0.3, "Call Us")
-        g.add_edge("contact_menu", "contact_email", 0.15, "Email")
-        g.add_edge("contact_menu", "root", 0.05, "Main Menu")
+        g.add_edge("contact_menu", "contact_chat", 0.50, "Live Chat")
+        g.add_edge("contact_menu", "contact_phone", 0.30, "Call Us")
+        g.add_edge("contact_menu", "contact_email", 0.15, "Email Us")
+        g.add_edge("contact_menu", "root", 0.05, "Back to Menu")
+        
+        # Contact Phone
+        g.add_node("contact_phone", "Phone Support")
+        g.add_edge("contact_phone", "contact_chat", 0.50, "Live Chat")
+        g.add_edge("contact_phone", "contact_email", 0.30, "Email Us")
+        g.add_edge("contact_phone", "contact_menu", 0.20, "Back to Contact")
+        
+        # Contact Email
+        g.add_node("contact_email", "Email Support")
+        g.add_edge("contact_email", "contact_chat", 0.50, "Live Chat")
+        g.add_edge("contact_email", "contact_phone", 0.30, "Call Us")
+        g.add_edge("contact_email", "contact_menu", 0.20, "Back to Contact")
+        
+        # Contact Chat
+        g.add_node("contact_chat", "Live Chat")
+        g.add_edge("contact_chat", "root", 0.50, "Back to Menu")
+        g.add_edge("contact_chat", "orders_menu", 0.30, "Check Orders")
+        g.add_edge("contact_chat", "returns_menu", 0.20, "Returns")
     
     def get_next_actions(self, current_state: str) -> Dict[str, Any]:
         """

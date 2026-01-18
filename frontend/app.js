@@ -107,7 +107,7 @@ function addMessage(text, isUser = false, meta = {}) {
 
     const textDiv = document.createElement('div');
     textDiv.className = 'message-text';
-    
+
     // Process text with markdown-like formatting
     let processedText = escapeHtml(text);
     // Bold: **text**
@@ -117,6 +117,36 @@ function addMessage(text, isUser = false, meta = {}) {
     textDiv.innerHTML = paragraphs.map(p => `<p>${p || '&nbsp;'}</p>`).join('');
 
     bubble.appendChild(textDiv);
+
+    // Quick Action Buttons (Weighted Graph suggestions)
+    if (!isUser && meta.next_actions && meta.next_actions.length > 0) {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'quick-actions';
+
+        const actionsLabel = document.createElement('div');
+        actionsLabel.className = 'quick-actions-label';
+        actionsLabel.textContent = 'Quick Actions:';
+        actionsDiv.appendChild(actionsLabel);
+
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'quick-actions-buttons';
+
+        meta.next_actions.forEach(action => {
+            const btn = document.createElement('button');
+            btn.className = 'quick-action-btn';
+            const percentage = Math.round(action.weight * 100);
+            btn.innerHTML = `${action.label} <span class="action-weight">(${percentage}%)</span>`;
+            btn.addEventListener('click', () => {
+                // Extract first word from label as the command (e.g., "Track Order" -> "track")
+                const command = action.label.split(' ')[0].toLowerCase();
+                sendMessage(command);
+            });
+            buttonsDiv.appendChild(btn);
+        });
+
+        actionsDiv.appendChild(buttonsDiv);
+        bubble.appendChild(actionsDiv);
+    }
 
     // Metadata Badges (Bot Only)
     if (!isUser && meta.data_structure) {
@@ -227,7 +257,7 @@ function showSuggestions(suggestions, prefix) {
     });
 
     elements.suggestionsDropdown.classList.remove('hidden');
-    
+
     // Highlight Trie when showing suggestions
     highlightDataStructures('Trie');
 }
@@ -281,7 +311,8 @@ async function sendMessage(message) {
 
         addMessage(data.response, false, {
             module: data.module,
-            data_structure: data.data_structure
+            data_structure: data.data_structure,
+            next_actions: data.next_actions || []
         });
 
     } catch (error) {
