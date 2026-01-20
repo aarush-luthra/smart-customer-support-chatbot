@@ -7,38 +7,54 @@
 
 :root {
     --header-bg: #ffffff;
-    --accent-primary: #6366f1;
-    --accent-hover: #4f46e5;
-    --bg-color: #fafafa;
-    --card-bg: #ffffff;
-    --text-primary: #1f2937;
+    --accent-primary: #171717;
+    /* Deep Black/Gray */
+    --accent-hover: #333333;
+    --bg-color: #ffffff;
+    /* Clean white */
+    --card-bg: #f9fafb;
+    /* Very light gray */
+    --text-primary: #111827;
     --text-secondary: #6b7280;
     --border-color: #e5e7eb;
     --success: #10b981;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    --radius-md: 16px;
+    /* More rounded */
+    --radius-lg: 24px;
+    /* Highly rounded for containers */
+    --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
 }
 
 body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-body);
     background: var(--bg-color);
     color: var(--text-primary);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chatbot Page Specific Body Lock */
+body.chatbot-page {
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* Header */
 .top-header {
-    background: var(--header-bg);
-    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 16px 32px;
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid transparent;
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(12px);
 }
 
 .header-container {
@@ -54,6 +70,7 @@ body {
     align-items: center;
     gap: 8px;
     color: var(--text-primary);
+    text-decoration: none;
 }
 
 .logo-icon {
@@ -103,23 +120,53 @@ body {
 .badge {
     background: var(--accent-primary);
     color: white;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
 }
 
 /* Main Layout */
+/* Main Layout (Global/Default) */
 .main-layout {
     display: flex;
+    flex-direction: column;
     max-width: 1200px;
     margin: 0 auto;
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 65px);
+    padding: 32px 20px;
+    box-sizing: border-box;
+    gap: 40px;
 }
 
-/* Sidebar - Hidden for minimalistic design */
+/* Chatbot Specific Layout (Split View) */
+.chatbot-layout {
+    flex-direction: row;
+    /* Horizontal split */
+    max-width: 100%;
+    margin: 0;
+    height: calc(100vh - 65px);
+    overflow: hidden;
+    padding: 0;
+    gap: 0;
+}
+
+/* Sidebar - Visible for split layout */
+/* Sidebar - Hidden by default (for landing page) */
 .sidebar {
     display: none;
+    width: 280px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 24px;
+    flex-shrink: 0;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Sidebar - Visible for Chatbot Page */
+.chatbot-sidebar {
+    display: flex;
 }
 
 /* Main Content */
@@ -149,7 +196,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #111827 0%, #374151 100%);
     color: white;
     font-size: 11px;
     font-weight: 600;
@@ -157,7 +204,7 @@ body {
     border-radius: 12px;
     font-family: 'IBM Plex Mono', monospace;
     letter-spacing: 0.3px;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Product List */
@@ -165,10 +212,10 @@ body {
 .recently-section,
 .recommendations-section {
     background: var(--card-bg);
-    padding: 24px;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: none;
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+    border: 1px solid var(--border-color);
 }
 
 .product-list,
@@ -183,18 +230,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    background: var(--bg-color);
-    border-radius: var(--radius-sm);
+    padding: 20px;
+    background: white;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid transparent;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-sm);
 }
 
 .product-row:hover {
     background: white;
     border-color: var(--border-color);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .product-info {
@@ -343,7 +392,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #111827 0%, #374151 100%);
     color: white;
     font-size: 11px;
     font-weight: 600;
@@ -351,7 +400,7 @@ body {
     border-radius: 12px;
     font-family: 'IBM Plex Mono', monospace;
     margin: 12px 24px;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .cart-items {
@@ -624,13 +673,17 @@ body {
 .bot-message .message-bubble {
     background: #f3f4f6;
     color: var(--text-primary);
+    border-radius: 20px;
     border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow-sm);
 }
 
 .user-message .message-bubble {
     background: #000000;
     color: white;
+    border-radius: 20px;
     border-bottom-right-radius: 4px;
+    box-shadow: var(--shadow-md);
 }
 
 .message-bubble p {
@@ -649,20 +702,24 @@ body {
 }
 
 .quick-actions button {
-    padding: 6px 12px;
+    padding: 8px 16px;
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    font-size: 12px;
+    border-radius: 20px;
+    font-size: 13px;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 .quick-actions button:hover {
     background: var(--accent-primary);
     color: white;
     border-color: var(--accent-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Weighted Graph Actions Section */
@@ -688,23 +745,27 @@ body {
 }
 
 .weighted-action-btn {
-    padding: 8px 14px;
+    padding: 10px 18px;
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    font-size: 13px;
+    border-radius: 24px;
+    font-size: 14px;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .weighted-action-btn:hover {
     background: var(--accent-primary);
     color: white;
     border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
 .weighted-action-btn:hover .weight {
@@ -921,7 +982,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #111827 0%, #374151 100%);
     color: white;
     font-size: 11px;
     font-weight: 600;
@@ -929,7 +990,7 @@ body {
     border-radius: 12px;
     font-family: 'IBM Plex Mono', monospace;
     margin-bottom: 16px;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .profile-field {
@@ -1167,8 +1228,8 @@ body {
 }
 
 .chatbot-sidebar .ds-item.active {
-    background: #eef2ff;
-    border-color: var(--accent-primary);
+    background: var(--card-bg);
+    border-color: var(--text-primary);
 }
 
 .chatbot-sidebar .ds-icon {
@@ -1220,19 +1281,24 @@ body {
 
 .chatbot-container {
     width: 100%;
-    max-width: 800px;
-    height: calc(100vh - 70px);
+    max-width: 100%;
+    height: 100%;
+    /* Fill available space */
     display: flex;
     flex-direction: column;
-    background: var(--card-bg);
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
+    background: white;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
 }
 
 .chatbot-header {
-    padding: 32px 32px 24px;
+    padding: 24px 32px;
     border-bottom: 1px solid var(--border-color);
     text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
 }
 
 .chatbot-header h1 {
@@ -1257,32 +1323,34 @@ body {
 }
 
 .chatbot-input-area {
-    padding: 20px 32px;
-    border-top: 1px solid var(--border-color);
+    padding: 24px 32px;
+    border-top: 1px solid transparent;
     display: flex;
-    gap: 12px;
-    background: var(--card-bg);
+    gap: 16px;
+    background: white;
 }
 
 .chatbot-input-area input {
     flex: 1;
-    padding: 14px 20px;
+    padding: 16px 24px;
     border: 1px solid var(--border-color);
-    border-radius: 28px;
+    border-radius: 50px;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 16px;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
+    background: var(--card-bg);
+    box-shadow: none;
 }
 
 .chatbot-input-area input:focus {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1);
 }
 
 .chatbot-input-area .send-btn {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     background: var(--accent-primary);
     border: none;
     border-radius: 50%;
@@ -1290,7 +1358,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s, transform 0.2s;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-md);
 }
 
 .chatbot-input-area .send-btn:hover {

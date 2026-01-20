@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 </head>
 
-<body>
+<body class="chatbot-page">
     <!-- Top Header -->
     <header class="top-header">
         <div class="header-container">
@@ -121,6 +121,7 @@
                             </svg>
                         </button>
                     </div>
+                    <div class="chatbot-subtitle">Powered by multiple data structures</div>
                 </div>
 
                 <div class="chatbot-messages" id="chat-messages">
@@ -161,7 +162,64 @@
                     </button>
                 </div>
             </div>
-        </main>
+
+            <!-- Features Grid -->
+            <div style="display: none; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%;">
+
+                <!-- Recently Viewed (Linked List) -->
+                <section class="recently-section" onclick="highlightDS('linkedlist')">
+                    <div class="section-header">
+                        <span class="ds-badge-inline">Linked List</span>
+                        <h2>Recently Viewed</h2>
+                    </div>
+                    <div class="recent-list">
+                        <div class="recent-row">
+                            <div class="product-info">
+                                <span class="product-name">Wireless Headphones</span>
+                                <span class="product-category">Audio</span>
+                            </div>
+                            <span class="product-price">$299.00</span>
+                        </div>
+                        <div class="recent-row">
+                            <div class="product-info">
+                                <span class="product-name">Smart Watch Series 7</span>
+                                <span class="product-category">Wearables</span>
+                            </div>
+                            <span class="product-price">$399.00</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recommendations (Priority Queue) -->
+                <section class="recommendations-section" onclick="highlightDS('pqueue')">
+                    <div class="section-header">
+                        <span class="ds-badge-inline">Priority Queue</span>
+                        <h2>Recommended</h2>
+                    </div>
+                    <div class="recommend-list">
+                        <div class="recommend-row">
+                            <div class="product-info">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                                    <span class="product-name">ErgoComp Keyboard</span>
+                                    <span class="score">98% Match</span>
+                                </div>
+                                <span class="product-category">Accessories</span>
+                            </div>
+                        </div>
+                        <div class="recommend-row">
+                            <div class="product-info">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                                    <span class="product-name">Noise Cancel Pods</span>
+                                    <span class="score">94% Match</span>
+                                </div>
+                                <span class="product-category">Audio</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
     </div>
 
     <script>
@@ -387,6 +445,23 @@
             typingDiv.innerHTML = '<div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
             chatMessages.appendChild(typingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Special case: Chat with Agent
+            if (text.toLowerCase().includes('agent')) {
+                setTimeout(() => {
+                    typingDiv.remove();
+                    addMessage('Connecting to agent...', false);
+                    hideWeightedActions();
+                    chatInput.disabled = true;
+                    const sendBtn = document.querySelector('.send-btn');
+                    if (sendBtn) {
+                        sendBtn.style.opacity = '0.5';
+                        sendBtn.style.pointerEvents = 'none';
+                    }
+                    updateDSUsedBadge(['Decision Tree', 'Weighted Graph']);
+                }, 1000);
+                return;
+            }
 
             try {
                 const res = await fetch(`${CONFIG.API_BASE}/api/message`, {
