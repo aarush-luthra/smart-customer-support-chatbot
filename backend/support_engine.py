@@ -15,7 +15,7 @@ Author: Customer Support System
 
 from typing import Dict, Any, List, Optional
 import re
-from backend.data_structures import (
+from data_structures import (
     Trie,
     FAQHashMap,
     DecisionTree,

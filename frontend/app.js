@@ -12,10 +12,11 @@
 
 // ============ Configuration ============
 const CONFIG = {
-    API_BASE: '',
+    API_BASE: 'http://localhost:8000',
     DEBOUNCE_MS: 150,
     USER_ID: 'user_' + Math.random().toString(36).substr(2, 9)
 };
+
 
 // ============ State ============
 const state = {

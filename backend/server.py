@@ -23,7 +23,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from typing import Dict, Any
 
-from backend.support_engine import get_engine
+from support_engine import get_engine
 
 
 # Determine paths
@@ -66,6 +66,15 @@ class SupportHandler(BaseHTTPRequestHandler):
             self._handle_api_post(parsed_path)
         else:
             self._send_404()
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type") 
+        super().end_headers()
+
     
     def _handle_api_get(self, parsed_path):
         """Handle API GET requests."""
@@ -152,7 +161,6 @@ class SupportHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", len(response_bytes))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(response_bytes)
     
