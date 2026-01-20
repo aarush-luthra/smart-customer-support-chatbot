@@ -139,6 +139,72 @@ body.chatbot-page {
     gap: 40px;
 }
 
+/* Hero Section */
+.hero-section {
+    max-width: 1200px;
+    margin: 40px auto 60px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.hero-content {
+    flex: 1;
+    max-width: 500px;
+}
+
+.hero-content h1 {
+    font-size: 56px;
+    font-weight: 800;
+    /* Extra bold */
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -2px;
+    color: var(--text-primary);
+}
+
+.hero-content p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    line-height: 1.6;
+}
+
+.hero-btn {
+    background: var(--text-primary);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    /* Slightly squarer for professional look */
+}
+
+.hero-btn:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.hero-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 20px;
+    /* Consistent rounded aesthetic */
+    /* mix-blend-mode: multiply; Only if images have white bg, but they don't necessarily */
+}
+
 /* Chatbot Specific Layout (Split View) */
 .chatbot-layout {
     flex-direction: row;
@@ -218,7 +284,6 @@ body.chatbot-page {
     border: 1px solid var(--border-color);
 }
 
-.product-list,
 .recent-list,
 .recommend-list {
     display: flex;
@@ -226,87 +291,141 @@ body.chatbot-page {
     gap: 10px;
 }
 
-.product-row {
+/* Products Section */
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    /* 3 column grid */
+    gap: 32px;
+    width: 100%;
+}
+
+.product-card {
+    background: transparent;
+    overflow: visible;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-image-container {
+    background: #f4f4f5;
+    border-radius: var(--radius-md);
+    aspect-ratio: 1;
     display: flex;
     align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-image {
+    width: 80%;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    mix-blend-mode: multiply;
+}
+
+.product-card-details {
+    display: flex;
     justify-content: space-between;
-    padding: 20px;
-    background: white;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    box-shadow: var(--shadow-sm);
+    align-items: flex-start;
 }
 
-.product-row:hover {
-    background: white;
-    border-color: var(--border-color);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-
-.product-info {
+.product-text {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.product-name {
-    font-weight: 500;
-    font-size: 15px;
-    color: var(--text-primary);
-}
-
 .product-category {
-    font-size: 13px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-secondary);
+    font-weight: 600;
 }
 
-.product-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+.product-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
 }
 
 .product-price {
-    font-weight: 600;
-    font-size: 16px;
-    color: var(--text-primary);
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-family: var(--font-body);
 }
 
-.product-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.add-btn,
-.wish-btn {
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
+.add-btn-card {
+    background: transparent;
     border: 1px solid var(--border-color);
-    background: white;
-    transition: all 0.2s ease;
+    color: var(--text-primary);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
 }
 
-.add-btn {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
+.add-btn-card:hover {
+    background: var(--text-primary);
     color: white;
-    font-weight: 500;
+    border-color: var(--text-primary);
 }
 
-.add-btn:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+.wish-btn-card {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
 }
 
-.wish-btn:hover {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
+.product-card:hover .wish-btn-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wish-btn-card:hover {
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+@media (max-width: 900px) {
+    .product-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+border-color: var(--accent-primary);
+color: var(--accent-primary);
 }
 
 .wish-btn.active {

@@ -19,6 +19,7 @@ Author: Smart Customer Support System
 
 import json
 import os
+import mimetypes
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from typing import Dict, Any
@@ -56,6 +57,13 @@ class SupportHandler(BaseHTTPRequestHandler):
             self._serve_file("styles.css", "text/css")
         elif path == "/app.js":
             self._serve_file("app.js", "application/javascript")
+        elif path.startswith("/assets/"):
+            # Serve assets (images, etc.)
+            relative_path = path.lstrip("/")
+            ctype, _ = mimetypes.guess_type(path)
+            if ctype is None:
+                ctype = "application/octet-stream"
+            self._serve_file(relative_path, ctype)
         else:
             self._send_404()
     
@@ -134,17 +142,28 @@ class SupportHandler(BaseHTTPRequestHandler):
         filepath = os.path.join(FRONTEND_DIR, filename)
         
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            # Open in binary mode to support images
+            with open(filepath, "rb") as f:
                 content = f.read()
             
             self.send_response(200)
-            self.send_header("Content-Type", f"{content_type}; charset=utf-8")
-            self.send_header("Content-Length", len(content.encode("utf-8")))
+            
+            # Add charset only for text types
+            if content_type.startswith("text/") or content_type == "application/javascript":
+                self.send_header("Content-Type", f"{content_type}; charset=utf-8")
+            else:
+                self.send_header("Content-Type", content_type)
+                
+            self.send_header("Content-Length", len(content))
             self.end_headers()
-            self.wfile.write(content.encode("utf-8"))
+            self.wfile.write(content)
         
         except FileNotFoundError:
+            print(f"File not found: {filepath}") # Debug log
             self._send_404()
+        except Exception as e:
+            print(f"Error serving file {filepath}: {e}")
+            self._send_error(500, f"Internal Server Error: {e}")
     
     def _send_json(self, data: Dict[str, Any]):
         """Send a JSON response."""

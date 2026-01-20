@@ -140,10 +140,25 @@
             </div>
         </aside>
 
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1>Elevate Your Workspace.</h1>
+                <p>Premium essentials for the modern professional.</p>
+                <button class="hero-btn"
+                    onclick="document.getElementById('product-list-section').scrollIntoView({behavior: 'smooth'})">Shop
+                    Now</button>
+            </div>
+            <div class="hero-image">
+                <!-- Using one of the generated images as hero visual -->
+                <img src="assets/images/laptopstand.png" alt="Premium Workspace">
+            </div>
+        </section>
+
         <!-- Main Content -->
         <main class="main-content">
             <!-- Products List -->
-            <section class="products-section">
+            <section class="products-section" id="product-list-section">
                 <div class="section-header">
                     <h2>Products</h2>
                     <span class="ds-badge-inline">HashMap O(1)</span>

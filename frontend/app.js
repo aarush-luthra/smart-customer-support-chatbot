@@ -17,14 +17,13 @@ const state = {
     wishlist: new Set()
 };
 
-// 6 Products (no images)
 const PRODUCTS = [
-    { id: 'PROD-001', name: 'Wireless Headphones', price: 6499, category: 'Electronics' },
-    { id: 'PROD-002', name: 'Phone Case', price: 1499, category: 'Accessories' },
-    { id: 'PROD-003', name: 'Laptop Stand', price: 3999, category: 'Office' },
-    { id: 'PROD-004', name: 'USB-C Hub', price: 2999, category: 'Electronics' },
-    { id: 'PROD-005', name: 'Webcam HD', price: 5499, category: 'Electronics' },
-    { id: 'PROD-006', name: 'Mechanical Keyboard', price: 9999, category: 'Electronics' }
+    { id: 'PROD-001', name: 'Wireless Headphones', price: 6499, category: 'Electronics', image: 'assets/images/headphones.png' },
+    { id: 'PROD-002', name: 'Phone Case', price: 1499, category: 'Accessories', image: 'assets/images/phonecase.png' },
+    { id: 'PROD-003', name: 'Laptop Stand', price: 3999, category: 'Office', image: 'assets/images/laptopstand.png' },
+    { id: 'PROD-004', name: 'USB-C Hub', price: 2999, category: 'Electronics', image: 'assets/images/usbhub.png' },
+    { id: 'PROD-005', name: 'Webcam HD', price: 5499, category: 'Electronics', image: 'assets/images/webcam.png' },
+    { id: 'PROD-006', name: 'Mechanical Keyboard', price: 9999, category: 'Electronics', image: 'assets/images/keyboard.png' }
 ];
 
 const elements = {
@@ -56,33 +55,50 @@ function escapeHtml(text) {
 
 function highlightDS(name) {
     document.querySelectorAll('.ds-item').forEach(item => item.classList.remove('active'));
-    const dsMap = {
-        'trie': 'ds-trie', 'hashmap': 'ds-hashmap', 'hash': 'ds-hashmap',
-        'tree': 'ds-tree', 'decision': 'ds-tree', 'stack': 'ds-stack',
-        'union': 'ds-unionfind', 'graph': 'ds-graph', 'priority': 'ds-pqueue',
-        'heap': 'ds-pqueue', 'linked': 'ds-linkedlist', 'queue': 'ds-queue'
-    };
+    if (!name) return;
     const lower = name.toLowerCase();
+
+    // Specific Handling for Priority Queue vs Queue
+    if (lower.includes('priority') || lower.includes('heap')) {
+        document.getElementById('ds-pqueue')?.classList.add('active');
+        return;
+    }
+
+    const dsMap = {
+        'trie': 'ds-trie',
+        'hashmap': 'ds-hashmap', 'hash': 'ds-hashmap',
+        'decision': 'ds-tree', 'tree': 'ds-tree',
+        'stack': 'ds-stack',
+        'union': 'ds-unionfind',
+        'graph': 'ds-graph',
+        'linked': 'ds-linkedlist',
+        'queue': 'ds-queue' // Matches 'queue' but not 'priority' (handled above)
+    };
+
     for (const [key, id] of Object.entries(dsMap)) {
-        if (lower.includes(key)) document.getElementById(id)?.classList.add('active');
+        if (lower.includes(key)) {
+            document.getElementById(id)?.classList.add('active');
+            break; // Stop after first match to prevent multiple highlights
+        }
     }
 }
 
 // Products
 function renderProducts() {
     elements.productList.innerHTML = PRODUCTS.map(p => `
-        <div class="product-row" onclick="viewProduct('${p.id}')">
-            <div class="product-info">
-                <span class="product-name">${escapeHtml(p.name)}</span>
-                <span class="product-category">${p.category}</span>
+        <div class="product-card" onclick="viewProduct('${p.id}')">
+            <div class="product-image-container">
+                <img src="${p.image}" alt="${escapeHtml(p.name)}" class="product-image">
             </div>
-            <div class="product-right">
-                <span class="product-price">₹${p.price.toLocaleString('en-IN')}</span>
-                <div class="product-actions" onclick="event.stopPropagation()">
-                    <button class="add-btn" onclick="addToCart('${p.id}')">Add</button>
-                    <button class="wish-btn ${state.wishlist.has(p.id) ? 'active' : ''}" onclick="toggleWishlist('${p.id}')">♡</button>
+            <div class="product-card-details">
+                <div class="product-text">
+                    <span class="product-category">${p.category}</span>
+                    <h3 class="product-name">${escapeHtml(p.name)}</h3>
+                    <span class="product-price">₹${p.price.toLocaleString('en-IN')}</span>
                 </div>
+                <button class="add-btn-card" onclick="event.stopPropagation(); addToCart('${p.id}')">Add</button>
             </div>
+             <button class="wish-btn-card ${state.wishlist.has(p.id) ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${p.id}')">♡</button>
         </div>
     `).join('');
     highlightDS('HashMap');
