@@ -22,7 +22,10 @@ from backend.data_structures import (
     ConversationStack,
     UnionFind,
     WeightedGraph,
-    OrderDatabase
+    OrderDatabase,
+    UserProfile,
+    ShoppingCart,
+    Wishlist
 )
 
 
@@ -56,6 +59,11 @@ class SupportEngine:
         # DS 7: OrderDatabase for order lookup
         self._order_db = OrderDatabase()
         
+        # DS 8-10: New E-Commerce Features (per-user)
+        self._user_profiles: Dict[str, UserProfile] = {}
+        self._user_carts: Dict[str, ShoppingCart] = {}
+        self._user_wishlists: Dict[str, Wishlist] = {}
+        
         # Initialize all content
         self._populate_trie()
         self._populate_faq()
@@ -68,6 +76,24 @@ class SupportEngine:
         if user_id not in self._user_stacks:
             self._user_stacks[user_id] = ConversationStack()
         return self._user_stacks[user_id]
+    
+    def _get_user_profile(self, user_id: str) -> UserProfile:
+        """Get or create profile for user. Uses HashMap for O(1) lookup."""
+        if user_id not in self._user_profiles:
+            self._user_profiles[user_id] = UserProfile(user_id)
+        return self._user_profiles[user_id]
+    
+    def _get_user_cart(self, user_id: str) -> ShoppingCart:
+        """Get or create cart for user. Uses HashMap for O(1) lookup."""
+        if user_id not in self._user_carts:
+            self._user_carts[user_id] = ShoppingCart()
+        return self._user_carts[user_id]
+    
+    def _get_user_wishlist(self, user_id: str) -> Wishlist:
+        """Get or create wishlist for user. Uses HashMap for O(1) lookup."""
+        if user_id not in self._user_wishlists:
+            self._user_wishlists[user_id] = Wishlist()
+        return self._user_wishlists[user_id]
     
     # =========================================================================
     # DATA STRUCTURE 1: TRIE - Auto-Complete
@@ -102,6 +128,18 @@ class SupportEngine:
             
             # Products
             "products", "pricing", "discount", "sale", "coupon",
+            
+            # E-Commerce Features
+            "cart", "shopping cart", "add to cart", "view cart",
+            "wishlist", "add to wishlist", "my wishlist",
+            "profile", "my profile", "view profile",
+            "order history", "recent orders", "past orders",
+            "undo", "checkout",
+            
+            # Products for cart/wishlist
+            "headphones", "wireless headphones", "phone case",
+            "laptop stand", "usb hub", "webcam", "keyboard",
+            "gaming mouse", "monitor light", "desk mat",
             
             # General
             "hello", "hi", "thanks", "thank you", "bye", "goodbye"
@@ -139,17 +177,17 @@ class SupportEngine:
                 "category": "pricing"
             },
             {
-                "keywords": ["shipping", "delivery time", "how long"],
+                "keywords": ["shipping time", "delivery time", "how long shipping"],
                 "response": "Standard shipping: 5-7 business days (free over $50)\nExpress shipping: 2-3 business days ($9.99)\nOvernight: Next business day ($19.99)",
                 "category": "shipping"
             },
             {
-                "keywords": ["return", "return policy", "returns"],
+                "keywords": ["return policy info", "return window", "how to return"],
                 "response": "We offer a 30-day return policy for unused items in original packaging. Refunds are processed within 5-7 business days after we receive the item.",
                 "category": "returns"
             },
             {
-                "keywords": ["contact", "phone", "email", "reach"],
+                "keywords": ["contact info", "support email", "customer service"],
                 "response": "Contact us:\nEmail: support@shop.com\nPhone: 1-800-SHOP-NOW\nLive chat: 9 AM - 9 PM EST\nAddress: 123 Commerce St, NY",
                 "category": "contact"
             },
@@ -164,7 +202,7 @@ class SupportEngine:
                 "category": "payment"
             },
             {
-                "keywords": ["track", "tracking", "where is", "package"],
+                "keywords": ["tracking number", "track package", "where is my order", "track my package"],
                 "response": "To track your order:\n1. Log into your account\n2. Go to 'My Orders'\n3. Click 'Track Package'\n\nOr enter your tracking number at our tracking page!",
                 "category": "tracking"
             },
@@ -196,13 +234,21 @@ class SupportEngine:
             "Welcome to Customer Support! How can I help you today?\n\n"
             "Choose a topic:\n"
             "- Orders: Track, cancel, or modify orders\n"
+            "- Cart: View or manage shopping cart\n"
+            "- Wishlist: View saved items\n"
+            "- Profile: View your profile\n"
             "- Returns: Return items or request refunds\n"
-            "- Account: Login, password, or profile help\n"
-            "- Products: Pricing and availability\n"
+            "- Products: Browse products & pricing\n"
             "- Contact: Speak to a human agent",
             options={
                 "order": "orders_menu",
                 "orders": "orders_menu",
+                "cart": "cart_menu",
+                "shopping": "cart_menu",
+                "wishlist": "wishlist_menu",
+                "wish": "wishlist_menu",
+                "profile": "profile_menu",
+                "my profile": "profile_menu",
                 "return": "returns_menu",
                 "refund": "returns_menu",
                 "account": "account_menu",
@@ -278,6 +324,229 @@ class SupportEngine:
             "- Type 'menu' → Main menu\n"
             "- Type 'chat' → Live agent",
             options={"back": "orders_menu", "orders": "orders_menu", "menu": "root", "chat": "contact_chat", "agent": "contact_chat"},
+            is_leaf=True
+        )
+        
+        # ===== SHOPPING CART MENU (HashMap + Stack) =====
+        tree.add_node(
+            "cart_menu",
+            "**Shopping Cart** 🛒\n\n"
+            "Your cart uses HashMap for O(1) item lookup!\n\n"
+            "Available actions:\n"
+            "- View: See cart contents\n"
+            "- Add: Add a product (e.g., 'add headphones')\n"
+            "- Remove: Remove an item\n"
+            "- Undo: Reverse last action (Stack!)\n"
+            "- Products: See available products\n"
+            "- Back: Return to main menu",
+            options={
+                "view": "cart_view",
+                "see": "cart_view",
+                "add": "cart_add",
+                "remove": "cart_remove",
+                "delete": "cart_remove",
+                "products": "cart_products",
+                "catalog": "cart_products",
+                "back": "root",
+                "menu": "root"
+            }
+        )
+        
+        tree.add_node(
+            "cart_view",
+            "**View Cart**\n\n"
+            "Type 'show cart' to see your current cart contents.\n\n"
+            "**Navigation:**\n"
+            "- Type 'add [product]' → Add item\n"
+            "- Type 'undo' → Undo last action\n"
+            "- Type 'back' → Cart menu",
+            options={"back": "cart_menu", "cart": "cart_menu", "menu": "root", "add": "cart_add"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "cart_add",
+            "**Add to Cart**\n\n"
+            "Type the product name to add:\n"
+            "- Wireless Headphones ($79.99)\n"
+            "- Phone Case ($19.99)\n"
+            "- Laptop Stand ($49.99)\n"
+            "- Gaming Mouse ($59.99)\n"
+            "- Mechanical Keyboard ($129.99)\n\n"
+            "Example: 'add headphones'\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Cart menu",
+            options={"back": "cart_menu", "cart": "cart_menu", "menu": "root", "view": "cart_view"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "cart_remove",
+            "**Remove from Cart**\n\n"
+            "Type 'remove [product name]' to remove an item.\n"
+            "Or 'view' to see your cart first.\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Cart menu",
+            options={"back": "cart_menu", "cart": "cart_menu", "menu": "root", "view": "cart_view"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "cart_products",
+            "**Available Products**\n\n"
+            "Browse our catalog:\n"
+            "1. Wireless Headphones - $79.99\n"
+            "2. Phone Case - $19.99\n"
+            "3. Laptop Stand - $49.99\n"
+            "4. USB-C Hub - $39.99\n"
+            "5. Webcam HD - $69.99\n"
+            "6. Mechanical Keyboard - $129.99\n"
+            "7. Gaming Mouse - $59.99\n"
+            "8. Monitor Light Bar - $45.99\n"
+            "9. Desk Mat - $24.99\n"
+            "10. Cable Management Kit - $15.99\n\n"
+            "Say 'add [product]' to add to cart!",
+            options={"back": "cart_menu", "cart": "cart_menu", "menu": "root", "add": "cart_add"},
+            is_leaf=True
+        )
+        
+        # ===== WISHLIST MENU (HashMap) =====
+        tree.add_node(
+            "wishlist_menu",
+            "**Wishlist** ❤️\n\n"
+            "Your wishlist uses HashMap for O(1) lookups!\n\n"
+            "Available actions:\n"
+            "- View: See wishlist items\n"
+            "- Add: Save a product for later\n"
+            "- Remove: Remove from wishlist\n"
+            "- Move: Move item to cart\n"
+            "- Back: Return to main menu",
+            options={
+                "view": "wishlist_view",
+                "see": "wishlist_view",
+                "add": "wishlist_add",
+                "save": "wishlist_add",
+                "remove": "wishlist_remove",
+                "move": "wishlist_move",
+                "back": "root",
+                "menu": "root"
+            }
+        )
+        
+        tree.add_node(
+            "wishlist_view",
+            "**View Wishlist**\n\n"
+            "Type 'show wishlist' to see your saved items.\n\n"
+            "**Navigation:**\n"
+            "- Type 'add [product]' → Save item\n"
+            "- Type 'move [product]' → Move to cart\n"
+            "- Type 'back' → Wishlist menu",
+            options={"back": "wishlist_menu", "wishlist": "wishlist_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "wishlist_add",
+            "**Add to Wishlist**\n\n"
+            "Type 'wishlist [product name]' to save for later.\n\n"
+            "Example: 'wishlist headphones'\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Wishlist menu",
+            options={"back": "wishlist_menu", "wishlist": "wishlist_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "wishlist_remove",
+            "**Remove from Wishlist**\n\n"
+            "Type 'remove [product]' to remove from wishlist.\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Wishlist menu",
+            options={"back": "wishlist_menu", "wishlist": "wishlist_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "wishlist_move",
+            "**Move to Cart**\n\n"
+            "Type 'move [product]' to add to cart from wishlist.\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Wishlist menu",
+            options={"back": "wishlist_menu", "wishlist": "wishlist_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        # ===== PROFILE MENU (HashMap + Stack) =====
+        tree.add_node(
+            "profile_menu",
+            "**Your Profile** 👤\n\n"
+            "Profile uses HashMap for O(1) field access\n"
+            "and Stack for navigation history!\n\n"
+            "Options:\n"
+            "- View: See your profile\n"
+            "- Addresses: View saved addresses\n"
+            "- Payment: View payment methods\n"
+            "- Orders: View order history\n"
+            "- Back: Return to main menu",
+            options={
+                "view": "profile_view",
+                "see": "profile_view",
+                "address": "profile_addresses",
+                "addresses": "profile_addresses",
+                "payment": "profile_payment",
+                "payments": "profile_payment",
+                "orders": "profile_orders",
+                "history": "profile_orders",
+                "back": "root",
+                "menu": "root"
+            }
+        )
+        
+        tree.add_node(
+            "profile_view",
+            "**View Profile**\n\n"
+            "Type 'show profile' to see your full profile.\n\n"
+            "**Navigation:**\n"
+            "- Type 'addresses' → View addresses\n"
+            "- Type 'payment' → View payment methods\n"
+            "- Type 'back' → Profile menu",
+            options={"back": "profile_menu", "profile": "profile_menu", "menu": "root", "addresses": "profile_addresses", "payment": "profile_payment"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "profile_addresses",
+            "**Saved Addresses**\n\n"
+            "Type 'show addresses' to see your addresses.\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Profile menu",
+            options={"back": "profile_menu", "profile": "profile_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "profile_payment",
+            "**Payment Methods**\n\n"
+            "Type 'show payment' to see your saved cards.\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Profile menu",
+            options={"back": "profile_menu", "profile": "profile_menu", "menu": "root"},
+            is_leaf=True
+        )
+        
+        tree.add_node(
+            "profile_orders",
+            "**Order History**\n\n"
+            "Your recent orders:\n"
+            "- ORD-12345: Shipped\n"
+            "- ORD-67890: Processing\n"
+            "- ORD-11111: Delivered\n"
+            "- ORD-22222: Out for Delivery\n"
+            "- ORD-33333: Cancelled\n\n"
+            "Type an Order ID to see details!\n\n"
+            "**Navigation:**\n"
+            "- Type 'back' → Profile menu",
+            options={"back": "profile_menu", "profile": "profile_menu", "menu": "root", "orders": "orders_menu"},
             is_leaf=True
         )
         
@@ -804,6 +1073,21 @@ class SupportEngine:
             "contact_phone": ("contact_menu", "Contact Menu"),
             "contact_email": ("contact_menu", "Contact Menu"),
             "contact_chat": ("contact_menu", "Contact Menu"),
+            # Cart
+            "cart_view": ("cart_menu", "Cart Menu"),
+            "cart_add": ("cart_menu", "Cart Menu"),
+            "cart_remove": ("cart_menu", "Cart Menu"),
+            "cart_products": ("cart_menu", "Cart Menu"),
+            # Wishlist
+            "wishlist_view": ("wishlist_menu", "Wishlist Menu"),
+            "wishlist_add": ("wishlist_menu", "Wishlist Menu"),
+            "wishlist_remove": ("wishlist_menu", "Wishlist Menu"),
+            "wishlist_move": ("wishlist_menu", "Wishlist Menu"),
+            # Profile
+            "profile_view": ("profile_menu", "Profile Menu"),
+            "profile_addresses": ("profile_menu", "Profile Menu"),
+            "profile_payment": ("profile_menu", "Profile Menu"),
+            "profile_orders": ("profile_menu", "Profile Menu"),
         }
         
         nav_actions = []
@@ -934,6 +1218,204 @@ class SupportEngine:
                 order_found=order_result["success"],
                 next_actions=nav_actions
             )
+        
+        # =========================================================================
+        # E-COMMERCE FEATURES: Cart, Wishlist, Profile (HashMap + Stack)
+        # =========================================================================
+        message_lower = message.lower().strip()
+        
+        # ----- SHOPPING CART COMMANDS -----
+        # Show cart
+        if message_lower in ["show cart", "view cart", "my cart", "cart"]:
+            cart = self._get_user_cart(user_id)
+            return self._create_response(
+                cart.format_cart(),
+                "Shopping Cart",
+                "HashMap + Stack",
+                cart_items=cart.get_cart()["item_count"],
+                next_actions=[
+                    {"action": "cart_add", "label": "Add Items", "weight": 0.5},
+                    {"action": "root", "label": "Main Menu", "weight": 0.3},
+                    {"action": "wishlist_menu", "label": "View Wishlist", "weight": 0.2}
+                ]
+            )
+        
+        # Add to cart
+        if message_lower.startswith("add "):
+            product_name = message[4:].strip()
+            cart = self._get_user_cart(user_id)
+            # Find product by name
+            product_id = None
+            for pid, prod in cart.get_products().items():
+                if product_name.lower() in prod["name"].lower():
+                    product_id = pid
+                    break
+            
+            if product_id:
+                result = cart.add_item(product_id)
+                response = result["message"] if result["success"] else result["error"]
+                response += f"\n\n{cart.format_cart()}"
+                return self._create_response(
+                    response,
+                    "Cart Add",
+                    "HashMap + Stack",
+                    success=result["success"],
+                    next_actions=[
+                        {"action": "cart_menu", "label": "Cart Menu", "weight": 0.4},
+                        {"action": "cart_add", "label": "Add More", "weight": 0.35},
+                        {"action": "root", "label": "Main Menu", "weight": 0.25}
+                    ]
+                )
+            else:
+                return self._create_response(
+                    f"Product '{product_name}' not found.\n\nAvailable products:\n" +
+                    "\n".join([f"- {p['name']}" for p in cart.get_products().values()]),
+                    "Cart Add",
+                    "HashMap",
+                    success=False
+                )
+        
+        # Remove from cart
+        if message_lower.startswith("remove "):
+            product_name = message[7:].strip()
+            cart = self._get_user_cart(user_id)
+            product_id = None
+            for pid, prod in cart.get_products().items():
+                if product_name.lower() in prod["name"].lower():
+                    product_id = pid
+                    break
+            
+            if product_id:
+                result = cart.remove_item(product_id)
+                response = result["message"] if result["success"] else result["error"]
+                response += f"\n\n{cart.format_cart()}"
+                return self._create_response(
+                    response,
+                    "Cart Remove",
+                    "HashMap + Stack",
+                    success=result["success"]
+                )
+        
+        # Undo cart action (only in cart context or explicit undo cart)
+        if message_lower == "undo" and current_state.startswith("cart"):
+            cart = self._get_user_cart(user_id)
+            result = cart.undo()
+            response = result["message"] if result["success"] else result["error"]
+            response += f"\n\n{cart.format_cart()}"
+            return self._create_response(
+                response,
+                "Cart Undo",
+                "Stack (LIFO)",
+                success=result["success"]
+            )
+        
+        # ----- WISHLIST COMMANDS -----
+        # Show wishlist
+        if message_lower in ["show wishlist", "view wishlist", "my wishlist"]:
+            wishlist = self._get_user_wishlist(user_id)
+            return self._create_response(
+                wishlist.format_wishlist(),
+                "Wishlist",
+                "HashMap",
+                wishlist_count=wishlist.size(),
+                next_actions=[
+                    {"action": "wishlist_add", "label": "Add Items", "weight": 0.4},
+                    {"action": "cart_menu", "label": "View Cart", "weight": 0.35},
+                    {"action": "root", "label": "Main Menu", "weight": 0.25}
+                ]
+            )
+        
+        # Add to wishlist
+        if message_lower.startswith("wishlist ") or message_lower.startswith("save "):
+            prefix_len = 9 if message_lower.startswith("wishlist ") else 5
+            product_name = message[prefix_len:].strip()
+            wishlist = self._get_user_wishlist(user_id)
+            product_id = wishlist.find_by_name(product_name)
+            
+            if product_id:
+                result = wishlist.add(product_id)
+                response = result["message"] if result["success"] else result["error"]
+                response += f"\n\n{wishlist.format_wishlist()}"
+                return self._create_response(
+                    response,
+                    "Wishlist Add",
+                    "HashMap",
+                    success=result["success"]
+                )
+            else:
+                return self._create_response(
+                    f"Product '{product_name}' not found.",
+                    "Wishlist Add",
+                    "HashMap",
+                    success=False
+                )
+        
+        # Move from wishlist to cart
+        if message_lower.startswith("move "):
+            product_name = message[5:].strip()
+            wishlist = self._get_user_wishlist(user_id)
+            cart = self._get_user_cart(user_id)
+            product_id = wishlist.find_by_name(product_name)
+            
+            if product_id and wishlist.contains(product_id):
+                wishlist.remove(product_id)
+                cart.add_item(product_id)
+                return self._create_response(
+                    f"Moved item to cart!\n\n{cart.format_cart()}",
+                    "Move to Cart",
+                    "HashMap + Stack",
+                    success=True
+                )
+        
+        # ----- PROFILE COMMANDS -----
+        # Show profile
+        if message_lower in ["show profile", "view profile", "my profile"]:
+            profile = self._get_user_profile(user_id)
+            profile.push_view("profile_summary")
+            return self._create_response(
+                profile.format_profile_summary(),
+                "User Profile",
+                "HashMap + Stack",
+                next_actions=[
+                    {"action": "profile_addresses", "label": "View Addresses", "weight": 0.35},
+                    {"action": "profile_orders", "label": "Order History", "weight": 0.35},
+                    {"action": "root", "label": "Main Menu", "weight": 0.3}
+                ]
+            )
+        
+        # Show addresses
+        if message_lower in ["show addresses", "my addresses", "addresses"]:
+            profile = self._get_user_profile(user_id)
+            profile.push_view("addresses")
+            addresses = profile.get_field("addresses")
+            addr_str = "\n".join([
+                f"• **{addr['type']}**: {addr['street']}, {addr['city']}, {addr['state']} {addr['zip']}"
+                for addr in addresses
+            ])
+            return self._create_response(
+                f"**Your Saved Addresses**\n\n{addr_str}",
+                "Profile Addresses",
+                "HashMap + Stack"
+            )
+        
+        # Show payment methods
+        if message_lower in ["show payment", "payment methods", "my cards"]:
+            profile = self._get_user_profile(user_id)
+            profile.push_view("payment")
+            payments = profile.get_field("payment_methods")
+            pay_str = "\n".join([
+                f"• {pm['type']} {'••••' + pm.get('last_four', '') if pm.get('last_four') else pm.get('email', '')} {'(Default)' if pm.get('default') else ''}"
+                for pm in payments
+            ])
+            return self._create_response(
+                f"**Your Payment Methods**\n\n{pay_str}",
+                "Profile Payment",
+                "HashMap + Stack"
+            )
+        
+        # =========================================================================
+        # END E-COMMERCE FEATURES
+        # =========================================================================
         
         # DS 5: Normalize intent using Union-Find
         intent_result = self.normalize_intent(message)

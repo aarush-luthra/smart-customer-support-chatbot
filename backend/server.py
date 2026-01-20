@@ -50,6 +50,8 @@ class SupportHandler(BaseHTTPRequestHandler):
         # Static files
         elif path == "/" or path == "/index.html":
             self._serve_file("index.html", "text/html")
+        elif path == "/chatbot.html":
+            self._serve_file("chatbot.html", "text/html")
         elif path == "/styles.css":
             self._serve_file("styles.css", "text/css")
         elif path == "/app.js":

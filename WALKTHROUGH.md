@@ -1,6 +1,6 @@
 # Customer Support Chatbot - Visual Walkthrough
 
-A complete visual guide to the 6 data structures powering this chatbot.
+A complete visual guide to the 9 data structures powering the ShopDS application and Support Assistant.
 
 ---
 
@@ -8,7 +8,6 @@ A complete visual guide to the 6 data structures powering this chatbot.
 
 **Purpose:** Provides real-time suggestions as users type.
 
-![Trie Data Structure](docs/images/trie_diagram.png)
 
 ### How It Works
 
@@ -32,7 +31,6 @@ The Trie stores keywords character by character. When you type "ord", it travers
 
 **Purpose:** Instant retrieval of frequently asked questions.
 
-![HashMap Data Structure](docs/images/hashmap_diagram.png)
 
 ### How It Works
 
@@ -58,7 +56,6 @@ Keywords are hashed to bucket indices for O(1) average lookup:
 
 **Purpose:** Manages branching conversation paths.
 
-![Decision Tree Data Structure](docs/images/decision_tree_diagram.png)
 
 ### How It Works
 
@@ -84,7 +81,6 @@ Each node represents a conversation state with defined options:
 
 **Purpose:** Enables LIFO (Last In, First Out) backtracking.
 
-![Stack Data Structure](docs/images/stack_diagram.png)
 
 ### How It Works
 
@@ -111,7 +107,6 @@ Every navigation pushes state onto the stack:
 
 **Purpose:** Groups equivalent intents under canonical names.
 
-![Union-Find Data Structure](docs/images/unionfind_diagram.png)
 
 ### How It Works
 
@@ -144,7 +139,6 @@ All trigger the same cancel flow!
 
 **Purpose:** Suggests next best actions based on probability weights.
 
-![Weighted Graph Data Structure](docs/images/weighted_graph_diagram.png)
 
 ### How It Works
 
@@ -166,49 +160,91 @@ Top 3 are shown as clickable buttons!
 
 ---
 
+## 7. Linked List - Recently Viewed
+
+**Purpose:** Maintains an ordered history of items you've viewed.
+
+### How It Works
+
+Each product view adds a node to the front (head) of the list. If the list exceeds 4 items, the oldest one is removed.
+- View A → [A]
+- View B → [B] → [A]
+- View C → [C] → [B] → [A]
+- View D → [D] → [C] → [B] → [A]
+
+### Demo
+
+1. Click on several products in the main catalog.
+2. Watch them appear in the "Recently Viewed" section at the top.
+3. Observe how the 5th product pushes the 1st one out.
+
+---
+
+## 8. Priority Queue - Recommendations
+
+**Purpose:** Ranks products by relevance so you see the best matches first.
+
+### How It Works
+
+Products are assigned a score (e.g., 98%) and stored in a Max-Heap. The system always serves the highest-priority items to the UI.
+
+### Demo
+
+1. Scroll to the "Recommended for You" section.
+2. Notice the products are sorted by their match percentage.
+3. This ensures a personalized shopping experience.
+
+---
+
+## 9. Queue - Checkout Flow
+
+**Purpose:** Manages a sequential, step-by-step transaction process.
+
+### How It Works
+
+A FIFO (First-In, First-Out) flow ensures a logical sequence:
+`Cart` → `Shipping` → `Payment` → `Confirm`
+
+### Demo
+
+1. Add items to your cart and click "Checkout [Queue]".
+2. Follow the 4-step modal process.
+3. The queue ensures no steps are skipped.
+
+---
+
 ## Complete Demo Flow
 
-Follow this sequence to showcase all 6 data structures:
+Follow this sequence to showcase all **9 data structures**:
 
-| Step | Type | Data Structure |
-|------|------|----------------|
-| 1 | `ord` (no Enter) | **Trie** - Suggestions appear |
-| 2 | `pricing` + Enter | **HashMap** - FAQ lookup |
-| 3 | `orders` + Enter | **Decision Tree** - Navigation |
-| 4 | `track` + Enter | **Decision Tree** - Deeper |
-| 5 | `back` + Enter | **Stack** - Go back |
-| 6 | `stop order` + Enter | **Union-Find** - Synonym |
-| 7 | Click "Track Order (50%)" | **Weighted Graph** - Action |
+| Step | Action | Data Structure |
+|------|--------|----------------|
+| 1 | View 1-5 products | **Linked List** - History updates |
+| 2 | Check "Recommended" | **Priority Queue** - Ranking |
+| 3 | Add to Cart | **HashMap** - O(1) storage |
+| 4 | Type `ord` (in Chat) | **Trie** - Suggestions |
+| 5 | Type `orders` | **Decision Tree** - Flow |
+| 6 | Type `back` | **Stack** - Backtrack |
+| 7 | Type `stop order` | **Union-Find** - Synonym |
+| 8 | Click "Track (50%)" | **Weighted Graph** - Prediction |
+| 9 | Process Checkout | **Queue** - Sequential Flow |
 
 ---
 
 ## Architecture Overview
 
 ```
-User Input
-    │
-    ▼
-┌─────────┐   ┌─────────┐   ┌─────────┐
-│  Trie   │ → │ Union-  │ → │ HashMap │
-│ (auto-  │   │  Find   │   │  (FAQ)  │
-│complete)│   │(synonym)│   │         │
-└─────────┘   └─────────┘   └─────────┘
-                  │              │
-                  ▼              ▼
-             ┌─────────┐   ┌─────────┐
-             │Decision │   │  Stack  │
-             │  Tree   │ ← │ (back)  │
-             └─────────┘   └─────────┘
-                  │
-                  ▼
-             ┌─────────┐
-             │Weighted │
-             │ Graph   │
-             │(suggest)│
-             └─────────┘
-                  │
-                  ▼
-            Response + Quick Actions
+  🛍️ E-Commerce Features         🤖 Support Assistant
+  ─────────────────────         ────────────────────
+  Linked List (History)         Trie (Autocomplete)
+          │                            │
+  Priority Queue (Recs)         Union-Find (Synonyms)
+          │                            │
+  HashMap (Cart/Profile) <───>  Decision Tree (Flow)
+          │                            │
+  Queue (Checkout Flow)         Stack (Back/Undo)
+                                       │
+                                Weighted Graph (Next)
 ```
 
 ---

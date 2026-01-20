@@ -4,157 +4,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Shop Customer Support - 6 Data Structures Demo</title>
+    <title>ShopDS - E-Commerce Powered by Data Structures</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Sidebar: Data Structures -->
-        <aside class="sidebar">
-            <div class="brand">
-                <h1>Customer Support</h1>
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="header-container">
+            <div class="logo">
+                <span class="logo-text">Shop<span class="logo-highlight">DS</span></span>
             </div>
 
-            <div class="sidebar-section">
-                <h2>Data Structures</h2>
+            <div class="header-actions">
+                <a href="/chatbot.html" class="action-btn support-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Support</span>
+                </a>
+                <button class="action-btn" onclick="openModal('profile')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Profile</span>
+                </button>
+                <button class="action-btn" onclick="openModal('orders')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                    <span>Orders</span>
+                </button>
+                <button class="action-btn" onclick="openModal('wishlist')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                        </path>
+                    </svg>
+                    <span>Wishlist</span>
+                    <span class="badge" id="wishlist-count">0</span>
+                </button>
+                <button class="action-btn cart-btn" onclick="toggleCartDrawer()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>Cart</span>
+                    <span class="badge cart-badge" id="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section ds-panel">
+                <h3>Data Structures</h3>
                 <div class="ds-list">
                     <div class="ds-item" id="ds-trie">
                         <span class="ds-icon">T</span>
                         <div class="ds-info">
-                            <span class="ds-name">Trie (Prefix Tree)</span>
-                            <span class="ds-desc">Auto-Complete Suggestions</span>
-                            <div class="ds-guide">Type "ord" or "can" to see real-time suggestions as you type.</div>
+                            <span class="ds-name">Trie</span>
+                            <span class="ds-desc">Auto-Complete</span>
                         </div>
                     </div>
                     <div class="ds-item" id="ds-hashmap">
                         <span class="ds-icon">H</span>
                         <div class="ds-info">
                             <span class="ds-name">HashMap</span>
-                            <span class="ds-desc">O(1) FAQ Lookup</span>
-                            <div class="ds-guide">Type "pricing", "shipping", or "hours" for instant O(1) answers.</div>
+                            <span class="ds-desc">O(1) Lookup</span>
                         </div>
                     </div>
                     <div class="ds-item" id="ds-tree">
                         <span class="ds-icon">D</span>
                         <div class="ds-info">
                             <span class="ds-name">Decision Tree</span>
-                            <span class="ds-desc">Conversation Flow</span>
-                            <div class="ds-guide">Type "orders" or "returns" to navigate branching conversation paths.
-                            </div>
+                            <span class="ds-desc">Chat Flow</span>
                         </div>
                     </div>
                     <div class="ds-item" id="ds-stack">
                         <span class="ds-icon">S</span>
                         <div class="ds-info">
                             <span class="ds-name">Stack</span>
-                            <span class="ds-desc">Go Back Navigation</span>
-                            <div class="ds-guide">Navigate into menus, then type "back" to return to previous state.
-                            </div>
+                            <span class="ds-desc">Undo / Back</span>
                         </div>
                     </div>
                     <div class="ds-item" id="ds-unionfind">
                         <span class="ds-icon">U</span>
                         <div class="ds-info">
                             <span class="ds-name">Union-Find</span>
-                            <span class="ds-desc">Synonym Grouping</span>
-                            <div class="ds-guide">"cancel order" = "stop order" = "abort" → same handler.</div>
+                            <span class="ds-desc">Synonyms</span>
                         </div>
                     </div>
                     <div class="ds-item" id="ds-graph">
                         <span class="ds-icon">G</span>
                         <div class="ds-info">
                             <span class="ds-name">Weighted Graph</span>
-                            <span class="ds-desc">Next Best Actions</span>
-                            <div class="ds-guide">See "Quick Actions" suggestions based on weighted probabilities.</div>
+                            <span class="ds-desc">Suggestions</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-pqueue">
+                        <span class="ds-icon">P</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Priority Queue</span>
+                            <span class="ds-desc">Recommendations</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-linkedlist">
+                        <span class="ds-icon">L</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Linked List</span>
+                            <span class="ds-desc">Recently Viewed</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-queue">
+                        <span class="ds-icon">Q</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Queue</span>
+                            <span class="ds-desc">Checkout</span>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="status-indicator online"></div>
-                <span>System Operational</span>
             </div>
         </aside>
 
-        <!-- Main Content: Chat Interface -->
+        <!-- Main Content -->
         <main class="main-content">
-            <div class="chat-container">
-                <header class="chat-header">
-                    <div class="header-content">
-                        <h2>Support Assistant</h2>
-                        <p>Demonstrating 7 Data Structures</p>
-                    </div>
-                    <button id="reset-button" class="btn-icon" title="Reset Conversation">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                            <path d="M3 3v5h5" />
-                        </svg>
-                    </button>
-                </header>
-
-                <div id="chat-messages" class="chat-messages">
-                    <!-- Welcome Message -->
-                    <div class="message bot-message">
-                        <div class="message-content">
-                            <div class="message-label">System</div>
-                            <div class="message-bubble">
-                                <div class="message-text">
-                                    <p><strong>Welcome to Customer Support</strong></p>
-                                    <p>I can help you with:</p>
-                                    <ul style="margin: 8px 0; padding-left: 20px;">
-                                        <li>Order tracking and management</li>
-                                        <li>Returns and refunds</li>
-                                        <li>Account settings</li>
-                                        <li>Product information</li>
-                                    </ul>
-                                    <p style="margin-top: 8px; font-size: 0.9em; color: #666;">Tip: Enter an Order ID
-                                        (e.g., ORD-12345) to look up your order.</p>
-                                </div>
-                                <div class="quick-actions" style="margin-top: 12px;">
-                                    <div class="quick-actions-label">Quick Actions:</div>
-                                    <div class="quick-actions-buttons">
-                                        <button class="quick-action-btn" onclick="sendMessage('orders')">Check Orders
-                                            <span class="action-weight">(35%)</span></button>
-                                        <button class="quick-action-btn" onclick="sendMessage('returns')">Returns <span
-                                                class="action-weight">(25%)</span></button>
-                                        <button class="quick-action-btn" onclick="sendMessage('account')">Account <span
-                                                class="action-weight">(20%)</span></button>
-                                    </div>
-                                </div>
-                                <div class="message-meta">
-                                    <span class="ds-badge">Weighted Graph</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Products List -->
+            <section class="products-section">
+                <div class="section-header">
+                    <h2>Products</h2>
+                    <span class="ds-badge-inline">HashMap O(1)</span>
                 </div>
+                <div class="product-list" id="product-list">
+                    <!-- Products rendered here -->
+                </div>
+            </section>
 
-                <div class="input-area">
-                    <div class="input-wrapper">
-                        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
-                        <!-- Suggestions Dropdown -->
-                        <div id="suggestions-dropdown" class="suggestions-dropdown hidden">
-                            <ul id="suggestions-list"></ul>
-                        </div>
-                    </div>
-                    <button id="send-button" class="btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
+            <!-- Recently Viewed -->
+            <section class="recently-section">
+                <div class="section-header">
+                    <h2>Recently Viewed</h2>
+                    <span class="ds-badge-inline">Linked List</span>
+                </div>
+                <div class="recent-list" id="recently-viewed">
+                    <p class="empty-text">Click on products to see them here</p>
+                </div>
+            </section>
+
+            <!-- Recommendations -->
+            <section class="recommendations-section">
+                <div class="section-header">
+                    <h2>Recommended</h2>
+                    <span class="ds-badge-inline">Priority Queue</span>
+                </div>
+                <div class="recommend-list" id="recommendations-list">
+                    <!-- Recommendations rendered here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h3>Shopping Cart</h3>
+            <button class="close-btn" onclick="toggleCartDrawer()">✕</button>
+        </div>
+        <div class="cart-ds-badge">HashMap</div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button class="checkout-btn" onclick="startCheckout()">Checkout [Queue]</button>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay" onclick="toggleCartDrawer()"></div>
+
+
+
+    <!-- Modal -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modal-title">Title</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal-overlay" onclick="closeCheckoutModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Checkout <span class="ds-badge-inline">Queue (FIFO)</span></h3>
+                <button class="modal-close" onclick="closeCheckoutModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-steps" id="checkout-steps"></div>
+                <div class="checkout-content" id="checkout-content"></div>
+                <div class="checkout-actions">
+                    <button id="checkout-back" onclick="prevCheckoutStep()">Back</button>
+                    <button id="checkout-next" onclick="nextCheckoutStep()">Next</button>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script src="app.js"></script>

@@ -1,77 +1,52 @@
 /**
- * E-Shop Customer Support - Frontend JavaScript
- * 
- * Demonstrates 6 Data Structures:
- * 1. Trie - Auto-complete suggestions
- * 2. HashMap - O(1) FAQ lookups
- * 3. Decision Tree - Conversation flow
- * 4. Stack - Go back navigation
- * 5. Union-Find - Synonym grouping
- * 6. Weighted Graph - Next best actions
+ * ShopDS - E-Commerce Powered by Data Structures (Simplified)
  */
 
-// ============ Configuration ============
 const CONFIG = {
     API_BASE: '',
-    DEBOUNCE_MS: 150,
     USER_ID: 'user_' + Math.random().toString(36).substr(2, 9)
 };
 
-// ============ State ============
 const state = {
     isLoading: false,
-    lastPrefix: ''
+    cartOpen: false,
+    chatOpen: false,
+    checkoutStep: 1,
+    recentlyViewed: [],
+    cart: { items: [] },
+    wishlist: new Set()
 };
 
-// ============ DOM Elements ============
+// 6 Products (no images)
+const PRODUCTS = [
+    { id: 'PROD-001', name: 'Wireless Headphones', price: 6499, category: 'Electronics' },
+    { id: 'PROD-002', name: 'Phone Case', price: 1499, category: 'Accessories' },
+    { id: 'PROD-003', name: 'Laptop Stand', price: 3999, category: 'Office' },
+    { id: 'PROD-004', name: 'USB-C Hub', price: 2999, category: 'Electronics' },
+    { id: 'PROD-005', name: 'Webcam HD', price: 5499, category: 'Electronics' },
+    { id: 'PROD-006', name: 'Mechanical Keyboard', price: 9999, category: 'Electronics' }
+];
+
 const elements = {
+    productList: document.getElementById('product-list'),
+    recentlyViewed: document.getElementById('recently-viewed'),
+    recommendationsList: document.getElementById('recommendations-list'),
+    cartDrawer: document.getElementById('cart-drawer'),
+    drawerOverlay: document.getElementById('drawer-overlay'),
+    cartItems: document.getElementById('cart-items'),
+    cartTotal: document.getElementById('cart-total'),
+    cartCount: document.getElementById('cart-count'),
+    wishlistCount: document.getElementById('wishlist-count'),
+    chatWidget: document.getElementById('chat-widget'),
+    chatToggle: document.getElementById('chat-toggle'),
     chatMessages: document.getElementById('chat-messages'),
-    userInput: document.getElementById('user-input'),
-    sendButton: document.getElementById('send-button'),
-    resetButton: document.getElementById('reset-button'),
-    suggestionsDropdown: document.getElementById('suggestions-dropdown'),
-    suggestionsList: document.getElementById('suggestions-list'),
-
-    // Data structure sidebar items
-    dsTrie: document.getElementById('ds-trie'),
-    dsHashmap: document.getElementById('ds-hashmap'),
-    dsTree: document.getElementById('ds-tree'),
-    dsStack: document.getElementById('ds-stack'),
-    dsUnionFind: document.getElementById('ds-unionfind'),
-    dsGraph: document.getElementById('ds-graph')
+    chatInput: document.getElementById('chat-input'),
+    modalOverlay: document.getElementById('modal-overlay'),
+    checkoutModal: document.getElementById('checkout-modal')
 };
 
-// ============ Utility Functions ============
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-async function apiRequest(endpoint, options = {}) {
-    try {
-        const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
-            headers: { 'Content-Type': 'application/json' },
-            ...options
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
-}
+// Check if we're on a page with chat elements
+const hasChatElements = elements.chatWidget && elements.chatInput;
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -79,339 +54,287 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function highlightPrefix(word, prefix) {
-    const prefixLower = prefix.toLowerCase();
-    const wordLower = word.toLowerCase();
-
-    if (wordLower.startsWith(prefixLower)) {
-        return `<span class="highlight">${escapeHtml(word.substring(0, prefix.length))}</span>${escapeHtml(word.substring(prefix.length))}`;
+function highlightDS(name) {
+    document.querySelectorAll('.ds-item').forEach(item => item.classList.remove('active'));
+    const dsMap = {
+        'trie': 'ds-trie', 'hashmap': 'ds-hashmap', 'hash': 'ds-hashmap',
+        'tree': 'ds-tree', 'decision': 'ds-tree', 'stack': 'ds-stack',
+        'union': 'ds-unionfind', 'graph': 'ds-graph', 'priority': 'ds-pqueue',
+        'heap': 'ds-pqueue', 'linked': 'ds-linkedlist', 'queue': 'ds-queue'
+    };
+    const lower = name.toLowerCase();
+    for (const [key, id] of Object.entries(dsMap)) {
+        if (lower.includes(key)) document.getElementById(id)?.classList.add('active');
     }
-    return escapeHtml(word);
 }
 
-// ============ UI Functions ============
-
-function addMessage(text, isUser = false, meta = {}) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-
-    const content = document.createElement('div');
-    content.className = 'message-content';
-
-    const label = document.createElement('div');
-    label.className = 'message-label';
-    label.textContent = isUser ? 'You' : 'System';
-
-    const bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-
-    const textDiv = document.createElement('div');
-    textDiv.className = 'message-text';
-
-    // Process text with markdown-like formatting
-    let processedText = escapeHtml(text);
-    // Bold: **text**
-    processedText = processedText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Split by newlines
-    const paragraphs = processedText.split('\n');
-    textDiv.innerHTML = paragraphs.map(p => `<p>${p || '&nbsp;'}</p>`).join('');
-
-    bubble.appendChild(textDiv);
-
-    // Quick Action Buttons (Weighted Graph suggestions)
-    if (!isUser && meta.next_actions && meta.next_actions.length > 0) {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'quick-actions';
-
-        const actionsLabel = document.createElement('div');
-        actionsLabel.className = 'quick-actions-label';
-        actionsLabel.textContent = 'Quick Actions:';
-        actionsDiv.appendChild(actionsLabel);
-
-        const buttonsDiv = document.createElement('div');
-        buttonsDiv.className = 'quick-actions-buttons';
-
-        meta.next_actions.forEach(action => {
-            const btn = document.createElement('button');
-            btn.className = 'quick-action-btn';
-            const percentage = Math.round(action.weight * 100);
-            btn.innerHTML = `${action.label} <span class="action-weight">(${percentage}%)</span>`;
-            btn.addEventListener('click', () => {
-                // Extract keyword from action ID (e.g., "products_pricing" -> "pricing", "order_track" -> "track")
-                // Or from label if action ID doesn't have underscore (e.g., "root" -> use label)
-                let command;
-                if (action.action && action.action.includes('_')) {
-                    // Get the last part after underscore: "products_pricing" -> "pricing"
-                    const parts = action.action.split('_');
-                    command = parts[parts.length - 1];
-                } else if (action.action === 'root') {
-                    command = 'menu';
-                } else {
-                    // Fallback: use first word of label lowercase
-                    command = action.label.split(' ')[0].toLowerCase();
-                }
-                sendMessage(command);
-            });
-            buttonsDiv.appendChild(btn);
-        });
-
-        actionsDiv.appendChild(buttonsDiv);
-        bubble.appendChild(actionsDiv);
-    }
-
-    // Metadata Badges (Bot Only)
-    if (!isUser && meta.data_structure) {
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'message-meta';
-
-        // Data structure badge
-        const dsBadge = document.createElement('span');
-        dsBadge.className = 'ds-badge';
-        dsBadge.textContent = `Used: ${meta.data_structure}`;
-        metaDiv.appendChild(dsBadge);
-
-        // Highlight the used data structures in sidebar
-        highlightDataStructures(meta.data_structure);
-
-        bubble.appendChild(metaDiv);
-    }
-
-    content.appendChild(label);
-    content.appendChild(bubble);
-    messageDiv.appendChild(content);
-    elements.chatMessages.appendChild(messageDiv);
-
-    // Scroll to bottom
-    elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-}
-
-function addTypingIndicator() {
-    const indicator = document.createElement('div');
-    indicator.className = 'message bot-message';
-    indicator.id = 'typing-indicator';
-
-    indicator.innerHTML = `
-        <div class="message-content">
-            <div class="message-label">System</div>
-            <div class="message-bubble">
-                <div class="message-text">
-                    <div class="typing-indicator">
-                        <span></span><span></span><span></span>
-                    </div>
+// Products
+function renderProducts() {
+    elements.productList.innerHTML = PRODUCTS.map(p => `
+        <div class="product-row" onclick="viewProduct('${p.id}')">
+            <div class="product-info">
+                <span class="product-name">${escapeHtml(p.name)}</span>
+                <span class="product-category">${p.category}</span>
+            </div>
+            <div class="product-right">
+                <span class="product-price">₹${p.price.toLocaleString('en-IN')}</span>
+                <div class="product-actions" onclick="event.stopPropagation()">
+                    <button class="add-btn" onclick="addToCart('${p.id}')">Add</button>
+                    <button class="wish-btn ${state.wishlist.has(p.id) ? 'active' : ''}" onclick="toggleWishlist('${p.id}')">♡</button>
                 </div>
             </div>
         </div>
-    `;
+    `).join('');
+    highlightDS('HashMap');
+}
 
-    elements.chatMessages.appendChild(indicator);
+function viewProduct(id) {
+    const product = PRODUCTS.find(p => p.id === id);
+    if (!product) return;
+    state.recentlyViewed = state.recentlyViewed.filter(p => p.id !== id);
+    state.recentlyViewed.unshift(product);
+    if (state.recentlyViewed.length > 4) state.recentlyViewed.pop();
+    renderRecentlyViewed();
+    highlightDS('Linked List');
+}
+
+function renderRecentlyViewed() {
+    if (state.recentlyViewed.length === 0) {
+        elements.recentlyViewed.innerHTML = '<p class="empty-text">Click on products to see them here</p>';
+        return;
+    }
+    elements.recentlyViewed.innerHTML = state.recentlyViewed.map(p => `
+        <div class="recent-row">
+            <span>${escapeHtml(p.name)}</span>
+            <span class="product-price">₹${p.price.toLocaleString('en-IN')}</span>
+        </div>
+    `).join('');
+}
+
+function renderRecommendations() {
+    const recs = [...PRODUCTS].map(p => ({ ...p, score: Math.floor(Math.random() * 30) + 70 }))
+        .sort((a, b) => b.score - a.score).slice(0, 4);
+    elements.recommendationsList.innerHTML = recs.map(p => `
+        <div class="recommend-row">
+            <span>${escapeHtml(p.name)} - ₹${p.price.toLocaleString('en-IN')}</span>
+            <span class="score">${p.score}%</span>
+        </div>
+    `).join('');
+    highlightDS('Priority Queue');
+}
+
+// Cart
+function toggleCartDrawer() {
+    state.cartOpen = !state.cartOpen;
+    elements.cartDrawer.classList.toggle('open', state.cartOpen);
+    elements.drawerOverlay.classList.toggle('open', state.cartOpen);
+    if (state.cartOpen) highlightDS('HashMap');
+}
+
+function addToCart(id) {
+    const product = PRODUCTS.find(p => p.id === id);
+    if (!product) return;
+    const existing = state.cart.items.find(i => i.id === id);
+    if (existing) existing.quantity++;
+    else state.cart.items.push({ ...product, quantity: 1 });
+    updateCartUI();
+    highlightDS('HashMap');
+    if (!state.cartOpen) toggleCartDrawer();
+}
+
+function removeFromCart(id) {
+    state.cart.items = state.cart.items.filter(i => i.id !== id);
+    updateCartUI();
+}
+
+function updateQty(id, delta) {
+    const item = state.cart.items.find(i => i.id === id);
+    if (!item) return;
+    item.quantity += delta;
+    if (item.quantity <= 0) removeFromCart(id);
+    else { updateCartUI(); }
+}
+
+
+function updateCartUI() {
+    const count = state.cart.items.reduce((s, i) => s + i.quantity, 0);
+    const total = state.cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+    elements.cartCount.textContent = count;
+    elements.cartTotal.textContent = `₹${total.toLocaleString('en-IN')}`;
+    if (state.cart.items.length === 0) {
+        elements.cartItems.innerHTML = '<div class="cart-empty">Cart is empty</div>';
+    } else {
+        elements.cartItems.innerHTML = state.cart.items.map(i => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${escapeHtml(i.name)}</div>
+                    <div class="cart-item-price">₹${i.price.toLocaleString('en-IN')}</div>
+                </div>
+                <div class="cart-item-qty">
+                    <button class="qty-btn" onclick="updateQty('${i.id}', -1)">−</button>
+                    <span>${i.quantity}</span>
+                    <button class="qty-btn" onclick="updateQty('${i.id}', 1)">+</button>
+                </div>
+                <button class="cart-item-remove" onclick="removeFromCart('${i.id}')">Remove</button>
+            </div>
+        `).join('');
+    }
+}
+
+// Wishlist
+function toggleWishlist(id) {
+    if (state.wishlist.has(id)) state.wishlist.delete(id);
+    else state.wishlist.add(id);
+    elements.wishlistCount.textContent = state.wishlist.size;
+    renderProducts();
+    highlightDS('HashMap');
+}
+
+// Checkout
+function startCheckout() {
+    if (state.cart.items.length === 0) return;
+    state.checkoutStep = 1;
+    elements.checkoutModal.classList.add('active');
+    updateCheckoutUI();
+    highlightDS('Queue');
+}
+
+function closeCheckoutModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    elements.checkoutModal.classList.remove('active');
+}
+
+function nextCheckoutStep() {
+    if (state.checkoutStep < 4) { state.checkoutStep++; updateCheckoutUI(); }
+    else { alert('Order placed! 🎉'); state.cart.items = []; updateCartUI(); closeCheckoutModal(); toggleCartDrawer(); }
+}
+
+function prevCheckoutStep() {
+    if (state.checkoutStep > 1) { state.checkoutStep--; updateCheckoutUI(); }
+}
+
+function updateCheckoutUI() {
+    const steps = ['Cart', 'Shipping', 'Payment', 'Confirm'];
+    document.getElementById('checkout-steps').innerHTML = steps.map((s, i) => `
+        <div class="checkout-step ${i + 1 === state.checkoutStep ? 'active' : ''} ${i + 1 < state.checkoutStep ? 'completed' : ''}">
+            <div class="num">${i + 1}</div>
+            <div class="label">${s}</div>
+        </div>
+    `).join('');
+    document.getElementById('checkout-back').disabled = state.checkoutStep === 1;
+    document.getElementById('checkout-next').textContent = state.checkoutStep === 4 ? 'Place Order' : 'Next';
+    const content = [
+        `<p>Items: ${state.cart.items.length}</p><p>Total: ₹${state.cart.items.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString('en-IN')}</p>`,
+        '<p>123 Main Street, NY 10001</p>',
+        '<p>Visa ending in 4242</p>',
+        '<p>Ready to place your order!</p>'
+    ];
+    document.getElementById('checkout-content').innerHTML = content[state.checkoutStep - 1];
+}
+
+// Chat
+function toggleChatWidget() {
+    if (!hasChatElements) return;
+    state.chatOpen = !state.chatOpen;
+    elements.chatWidget.classList.toggle('open', state.chatOpen);
+    elements.chatToggle?.classList.toggle('hidden', state.chatOpen);
+    if (state.chatOpen) { elements.chatInput.focus(); highlightDS('Decision Tree'); }
+}
+
+function addMessage(text, isUser = false, meta = {}) {
+    const div = document.createElement('div');
+    div.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+    let html = `<div class="message-bubble">${text.split('\n').map(p => `<p>${escapeHtml(p)}</p>`).join('')}</div>`;
+    if (!isUser && meta.next_actions?.length) {
+        html += `<div class="quick-actions">${meta.next_actions.map(a => `<button onclick="sendMessage('${a.label.split(' ')[0].toLowerCase()}')">${a.label}</button>`).join('')}</div>`;
+    }
+    div.innerHTML = html;
+    elements.chatMessages.appendChild(div);
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+    if (!isUser && meta.data_structure) highlightDS(meta.data_structure);
 }
 
-function removeTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) indicator.remove();
-}
-
-/**
- * Highlight data structures in the sidebar
- * Handles multiple DS names separated by commas
- */
-function highlightDataStructures(dsString) {
-    if (!dsString) return;
-
-    // Remove all highlights first
-    document.querySelectorAll('.ds-item').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    const dsLower = dsString.toLowerCase();
-
-    // Check each data structure
-    if (dsLower.includes('trie')) {
-        elements.dsTrie?.classList.add('active');
-    }
-    if (dsLower.includes('hashmap') || dsLower.includes('hash')) {
-        elements.dsHashmap?.classList.add('active');
-    }
-    if (dsLower.includes('decision tree') || dsLower.includes('tree')) {
-        elements.dsTree?.classList.add('active');
-    }
-    if (dsLower.includes('stack')) {
-        elements.dsStack?.classList.add('active');
-    }
-    if (dsLower.includes('union-find') || dsLower.includes('union')) {
-        elements.dsUnionFind?.classList.add('active');
-    }
-    if (dsLower.includes('graph') || dsLower.includes('weighted')) {
-        elements.dsGraph?.classList.add('active');
-    }
-}
-
-function showSuggestions(suggestions, prefix) {
-    if (!suggestions || suggestions.length === 0) {
-        hideSuggestions();
-        return;
-    }
-
-    elements.suggestionsList.innerHTML = '';
-
-    suggestions.forEach(word => {
-        const li = document.createElement('li');
-        li.className = 'suggestion-item';
-        li.innerHTML = highlightPrefix(word, prefix);
-        li.addEventListener('click', () => {
-            elements.userInput.value = word;
-            hideSuggestions();
-            elements.userInput.focus();
-        });
-        elements.suggestionsList.appendChild(li);
-    });
-
-    elements.suggestionsDropdown.classList.remove('hidden');
-
-    // Highlight Trie when showing suggestions
-    highlightDataStructures('Trie');
-}
-
-function hideSuggestions() {
-    elements.suggestionsDropdown.classList.add('hidden');
-}
-
-// ============ API Functions ============
-
-const fetchSuggestions = debounce(async (prefix) => {
-    if (!prefix || prefix.length < 2) {
-        hideSuggestions();
-        return;
-    }
-
-    if (prefix === state.lastPrefix) return;
-    state.lastPrefix = prefix;
-
-    try {
-        const data = await apiRequest(`/api/suggestions?prefix=${encodeURIComponent(prefix)}`);
-        showSuggestions(data.suggestions, prefix);
-    } catch (error) {
-        console.error('Failed to fetch suggestions:', error);
-        hideSuggestions();
-    }
-}, CONFIG.DEBOUNCE_MS);
-
-async function sendMessage(message) {
-    if (state.isLoading || !message.trim()) return;
-
+async function sendMessage(msg) {
+    if (!hasChatElements) return;
+    const text = msg || elements.chatInput.value.trim();
+    if (state.isLoading || !text) return;
     state.isLoading = true;
-    hideSuggestions();
+    addMessage(text, true);
+    elements.chatInput.value = '';
 
-    addMessage(message, true);
-    elements.userInput.value = '';
-    state.lastPrefix = '';
-
-    addTypingIndicator();
+    // Typing indicator
+    const typing = document.createElement('div');
+    typing.className = 'message bot-message';
+    typing.id = 'typing';
+    typing.innerHTML = '<div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+    elements.chatMessages.appendChild(typing);
+    elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
 
     try {
-        const data = await apiRequest('/api/message', {
+        const res = await fetch('/api/message', {
             method: 'POST',
-            body: JSON.stringify({
-                message: message,
-                user_id: CONFIG.USER_ID
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, user_id: CONFIG.USER_ID })
         });
-
-        removeTypingIndicator();
-
-        addMessage(data.response, false, {
-            module: data.module,
-            data_structure: data.data_structure,
-            next_actions: data.next_actions || []
-        });
-
-    } catch (error) {
-        removeTypingIndicator();
-        addMessage('Sorry, I encountered an error. Please try again.', false);
-    } finally {
-        state.isLoading = false;
+        const data = await res.json();
+        document.getElementById('typing')?.remove();
+        addMessage(data.response, false, { data_structure: data.data_structure, next_actions: data.next_actions || [] });
+    } catch (e) {
+        document.getElementById('typing')?.remove();
+        addMessage('Sorry, an error occurred.', false);
     }
+    state.isLoading = false;
 }
 
-async function resetConversation() {
-    try {
-        await apiRequest('/api/reset', {
-            method: 'POST',
-            body: JSON.stringify({ user_id: CONFIG.USER_ID })
-        });
+// Modals
+function openModal(type) {
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+    let content = '';
 
-        elements.chatMessages.innerHTML = '';
-
-        addMessage('System reset complete. How can I help you today?', false, {
-            data_structure: 'Stack, Decision Tree'
-        });
-
-        // Reset sidebar highlights
-        document.querySelectorAll('.ds-item.active').forEach(el => el.classList.remove('active'));
-
-    } catch (error) {
-        console.error('Failed to reset conversation:', error);
+    if (type === 'profile') {
+        title.textContent = 'My Profile';
+        content = `<div class="modal-ds-badge">HashMap</div>
+            <div class="profile-field"><label>Name</label><div class="value">Aarush</div></div>
+            <div class="profile-field"><label>Email</label><div class="value">aarushluthra@rvce.edu.in</div></div>`;
+        highlightDS('HashMap');
+    } else if (type === 'orders') {
+        title.textContent = 'Order History';
+        content = `<div class="modal-ds-badge">HashMap O(1)</div>
+            <div class="order-item"><span class="order-id">ORD-12345</span> <span class="order-status shipped">Shipped</span><br><small>Wireless Headphones • ₹6,499</small></div>
+            <div class="order-item"><span class="order-id">ORD-67890</span> <span class="order-status processing">Processing</span><br><small>Gaming Mouse • ₹4,999</small></div>
+            <div class="order-item"><span class="order-id">ORD-11111</span> <span class="order-status delivered">Delivered</span><br><small>Keyboard • ₹9,999</small></div>`;
+        highlightDS('HashMap');
+    } else if (type === 'wishlist') {
+        title.textContent = 'My Wishlist';
+        const items = PRODUCTS.filter(p => state.wishlist.has(p.id));
+        content = `<div class="modal-ds-badge">HashMap O(1)</div>` +
+            (items.length ? items.map(i => `<div class="wishlist-item">${i.name} - ₹${i.price.toLocaleString('en-IN')} <button onclick="addToCart('${i.id}');closeModal()" style="float:right;padding:4px 8px;border:1px solid #ddd;border-radius:4px;cursor:pointer">Add to Cart</button></div>`).join('') : '<p class="empty-text">Wishlist is empty</p>');
+        highlightDS('HashMap');
     }
+
+    body.innerHTML = content;
+    elements.modalOverlay.classList.add('active');
 }
 
-// ============ Event Listeners ============
+function closeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    elements.modalOverlay.classList.remove('active');
+}
 
-// Sidebar expand/collapse
-document.querySelectorAll('.ds-item').forEach(item => {
-    item.addEventListener('click', () => {
-        document.querySelectorAll('.ds-item').forEach(other => {
-            if (other !== item) other.classList.remove('expanded');
-        });
-        item.classList.toggle('expanded');
-    });
-});
+// Event listeners
+if (hasChatElements) {
+    elements.chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMessage(); } });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCheckoutModal(); } });
 
-// Input typing - trigger suggestions
-elements.userInput.addEventListener('input', (e) => {
-    const value = e.target.value.trim();
-    fetchSuggestions(value);
-});
-
-// Input keydown
-elements.userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(elements.userInput.value);
-    } else if (e.key === 'Escape') {
-        hideSuggestions();
-    }
-});
-
-// Send button
-elements.sendButton.addEventListener('click', () => {
-    sendMessage(elements.userInput.value);
-});
-
-// Reset button
-elements.resetButton.addEventListener('click', () => {
-    resetConversation();
-});
-
-// Hide suggestions on outside click
-document.addEventListener('click', (e) => {
-    if (!elements.suggestionsDropdown.contains(e.target) &&
-        e.target !== elements.userInput) {
-        hideSuggestions();
-    }
-});
-
-// ============ Initialization ============
-
+// Init
 function init() {
-    console.log('E-Shop Customer Support initialized');
-    console.log('User ID:', CONFIG.USER_ID);
-    console.log('Data Structures: Trie, HashMap, Decision Tree, Stack, Union-Find, Weighted Graph');
-    elements.userInput.focus();
+    console.log('ShopDS initialized');
+    renderProducts();
+    renderRecentlyViewed();
+    renderRecommendations();
+    updateCartUI();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
-}
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Support - ShopDS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                <span class="logo-text">Shop<span class="logo-highlight">DS</span></span>
+            </a>
+
+            <div class="header-actions">
+                <a href="/" class="action-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Home</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout chatbot-layout">
+        <!-- Sidebar with Data Structures -->
+        <aside class="sidebar chatbot-sidebar">
+            <div class="sidebar-section ds-panel">
+                <h3>Data Structures</h3>
+                <div class="ds-list">
+                    <div class="ds-item" id="ds-trie">
+                        <span class="ds-icon">T</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Trie (Prefix Tree)</span>
+                            <span class="ds-desc">Auto-Complete Suggestions</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-hashmap">
+                        <span class="ds-icon">H</span>
+                        <div class="ds-info">
+                            <span class="ds-name">HashMap</span>
+                            <span class="ds-desc">O(1) FAQ Lookup</span>
+                        </div>
+                    </div>
+                    <div class="ds-item active" id="ds-tree">
+                        <span class="ds-icon">D</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Decision Tree</span>
+                            <span class="ds-desc">Conversation Flow</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-stack">
+                        <span class="ds-icon">S</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Stack</span>
+                            <span class="ds-desc">Go Back Navigation</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-unionfind">
+                        <span class="ds-icon">U</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Union-Find</span>
+                            <span class="ds-desc">Synonym Grouping</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-graph">
+                        <span class="ds-icon">G</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Weighted Graph</span>
+                            <span class="ds-desc">Next Best Actions</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-pqueue">
+                        <span class="ds-icon">P</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Priority Queue</span>
+                            <span class="ds-desc">Recommendations</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-linkedlist">
+                        <span class="ds-icon">L</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Linked List</span>
+                            <span class="ds-desc">Recently Viewed</span>
+                        </div>
+                    </div>
+                    <div class="ds-item" id="ds-queue">
+                        <span class="ds-icon">Q</span>
+                        <div class="ds-info">
+                            <span class="ds-name">Queue</span>
+                            <span class="ds-desc">Checkout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Content -->
+        <main class="main-content chatbot-content">
+            <div class="chatbot-container">
+                <div class="chatbot-header">
+                    <div class="header-main">
+                        <h1>Support Assistant</h1>
+                        <button class="reset-btn" onclick="location.reload()" title="Reset Chat">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chatbot-messages" id="chat-messages">
+                    <!-- Initial message with SYSTEM label -->
+                    <div class="message bot-message">
+                        <div class="message-label">SYSTEM</div>
+                        <div class="message-bubble">
+                            <p><strong>Welcome to Support Assistant!</strong></p>
+                            <p>I help you navigate using multiple data structures. Try typing "orders" or "return" to
+                                begin.</p>
+                        </div>
+                        <div class="quick-actions">
+                            <button onclick="sendMessage('orders')">Orders</button>
+                            <button onclick="sendMessage('returns')">Returns</button>
+                            <button onclick="sendMessage('contact')">Contact</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weighted Graph Quick Actions Section -->
+                <div class="weighted-actions-section" id="weighted-actions-section" style="display: none;">
+                    <div class="weighted-actions-label">QUICK ACTIONS:</div>
+                    <div class="weighted-actions-buttons" id="weighted-actions-buttons"></div>
+                    <div class="ds-used-badge" id="ds-used-badge"></div>
+                </div>
+
+                <div class="chatbot-input-area">
+                    <div class="input-wrapper">
+                        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+                        <div class="autocomplete-suggestions" id="autocomplete-suggestions"></div>
+                    </div>
+                    <button class="send-btn" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const CONFIG = {
+            API_BASE: '',
+            USER_ID: 'user_' + Math.random().toString(36).substr(2, 9)
+        };
+
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const autocompleteSuggestions = document.getElementById('autocomplete-suggestions');
+
+        // ===== TRIE IMPLEMENTATION FOR AUTOCOMPLETE =====
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.isEndOfWord = false;
+                this.fullWord = null;
+            }
+        }
+
+        class Trie {
+            constructor() {
+                this.root = new TrieNode();
+            }
+
+            insert(word) {
+                let node = this.root;
+                const lowerWord = word.toLowerCase();
+                for (const char of lowerWord) {
+                    if (!node.children[char]) {
+                        node.children[char] = new TrieNode();
+                    }
+                    node = node.children[char];
+                }
+                node.isEndOfWord = true;
+                node.fullWord = word;
+            }
+
+            // Get all words with given prefix
+            getWordsWithPrefix(prefix) {
+                let node = this.root;
+                const lowerPrefix = prefix.toLowerCase();
+
+                // Navigate to the prefix node
+                for (const char of lowerPrefix) {
+                    if (!node.children[char]) {
+                        return [];
+                    }
+                    node = node.children[char];
+                }
+
+                // Collect all words from this node
+                const results = [];
+                this._collectWords(node, results);
+                return results;
+            }
+
+            _collectWords(node, results) {
+                if (node.isEndOfWord) {
+                    results.push(node.fullWord);
+                }
+                for (const char in node.children) {
+                    this._collectWords(node.children[char], results);
+                }
+            }
+        }
+
+        // Initialize Trie with common commands
+        const commandTrie = new Trie();
+        const commands = [
+            'Orders', 'Order Status', 'Order History', 'Order Tracking',
+            'Returns', 'Return Policy', 'Return Request', 'Refund',
+            'Contact', 'Contact Support', 'Contact Us',
+            'Help', 'Help Center',
+            'Products', 'Product Info', 'Product Details',
+            'Shipping', 'Shipping Status', 'Shipping Policy',
+            'Payment', 'Payment Methods', 'Payment Issues',
+            'Cancel', 'Cancel Order',
+            'Track', 'Track Order', 'Track Package',
+            'Back', 'Main Menu'
+        ];
+        commands.forEach(cmd => commandTrie.insert(cmd));
+
+        // Autocomplete functions
+        function showSuggestions(prefix) {
+            if (prefix.length < 1) {
+                hideSuggestions();
+                return;
+            }
+
+            const suggestions = commandTrie.getWordsWithPrefix(prefix);
+            if (suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            highlightDS('trie');
+            autocompleteSuggestions.innerHTML = suggestions.slice(0, 6).map(s =>
+                `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${highlightMatch(s, prefix)}</div>`
+            ).join('');
+            autocompleteSuggestions.style.display = 'block';
+        }
+
+        function highlightMatch(text, prefix) {
+            const lowerText = text.toLowerCase();
+            const lowerPrefix = prefix.toLowerCase();
+            if (lowerText.startsWith(lowerPrefix)) {
+                return `<strong>${text.substring(0, prefix.length)}</strong>${text.substring(prefix.length)}`;
+            }
+            return text;
+        }
+
+        function hideSuggestions() {
+            autocompleteSuggestions.style.display = 'none';
+            autocompleteSuggestions.innerHTML = '';
+        }
+
+        function selectSuggestion(text) {
+            chatInput.value = text;
+            hideSuggestions();
+            chatInput.focus();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function highlightDS(name) {
+            document.querySelectorAll('.ds-item').forEach(item => item.classList.remove('active'));
+            const el = document.getElementById(`ds-${name}`);
+            if (el) {
+                el.classList.add('active');
+                setTimeout(() => el.classList.remove('active'), 2500);
+            }
+        }
+
+        function parseMarkdown(text) {
+            // Convert markdown to HTML
+            let html = text;
+            // Escape HTML first for safety
+            html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            // Bold: **text** or __text__
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+            // Italic: *text* or _text_
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+            // Line breaks: - at start of line becomes list item
+            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+            // Wrap consecutive <li> items in <ul>
+            html = html.replace(/(<li>.*<\/li>)+/gs, '<ul>$&</ul>');
+            // Convert newlines to <br>
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        function addMessage(text, isUser = false, meta = {}) {
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = isUser ? 'YOU' : 'SYSTEM';
+            div.appendChild(label);
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = isUser ? escapeHtml(text) : parseMarkdown(text);
+            div.appendChild(bubble);
+
+            if (meta.actions && meta.actions.length > 0) {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'quick-actions';
+                meta.actions.forEach(action => {
+                    const btn = document.createElement('button');
+                    btn.textContent = action.label;
+                    btn.onclick = () => sendMessage(action.value || action.label);
+                    actionsDiv.appendChild(btn);
+                });
+                div.appendChild(actionsDiv);
+            }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Detect which data structure to highlight based on message content
+        function detectDataStructure(message) {
+            const lower = message.toLowerCase();
+            // Back navigation uses Stack
+            if (lower === 'back' || lower === 'go back' || lower === 'previous') {
+                return 'stack';
+            }
+            // Synonym words use Union-Find
+            const synonymGroups = ['order', 'purchase', 'buy', 'return', 'refund', 'help', 'support', 'contact'];
+            if (synonymGroups.some(word => lower.includes(word))) {
+                setTimeout(() => highlightDS('unionfind'), 300);
+            }
+            // Default to Decision Tree for chat flow
+            return 'tree';
+        }
+
+        async function sendMessage(msg) {
+            const text = msg || chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            addMessage(escapeHtml(text), true);
+
+            // Highlight appropriate data structure
+            const ds = detectDataStructure(text);
+            highlightDS(ds);
+
+            // Track which data structures are used
+            const usedDS = new Set(['Decision Tree']);
+            if (ds === 'stack') usedDS.add('Stack');
+            if (ds === 'unionfind') usedDS.add('Union-Find');
+
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message typing';
+            typingDiv.innerHTML = '<div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, user_id: CONFIG.USER_ID })
+                });
+                const data = await res.json();
+                typingDiv.remove();
+                const actions = data.next_actions?.map(a => ({ label: a.label, value: a.label })) || [];
+
+                // Show weighted graph actions section if there are actions
+                if (actions.length > 0) {
+                    usedDS.add('Weighted Graph');
+                    showWeightedActions(actions);
+                    setTimeout(() => highlightDS('graph'), 500);
+                } else {
+                    hideWeightedActions();
+                }
+
+                // Update the DS used badge
+                updateDSUsedBadge([...usedDS]);
+
+                addMessage(data.response || 'I couldn\'t process that.', false, { actions: [] }); // Don't show inline actions
+            } catch (e) {
+                typingDiv.remove();
+                addMessage('Sorry, something went wrong.', false);
+                hideWeightedActions();
+            }
+        }
+
+        // Weighted Graph Actions
+        const weightedActionsSection = document.getElementById('weighted-actions-section');
+        const weightedActionsButtons = document.getElementById('weighted-actions-buttons');
+        const dsUsedBadge = document.getElementById('ds-used-badge');
+
+        function showWeightedActions(actions) {
+            // Assign weights based on position (simulating graph edge weights)
+            const weights = [50, 30, 15, 5];
+            let html = '';
+            actions.slice(0, 4).forEach((action, i) => {
+                const weight = weights[i] || 5;
+                html += `<button class="weighted-action-btn" onclick="sendMessage('${action.label}')">${action.label} <span class="weight">(${weight}%)</span></button>`;
+            });
+            weightedActionsButtons.innerHTML = html;
+            weightedActionsSection.style.display = 'block';
+            highlightDS('graph');
+        }
+
+        function hideWeightedActions() {
+            weightedActionsSection.style.display = 'none';
+            weightedActionsButtons.innerHTML = '';
+        }
+
+        function updateDSUsedBadge(dsList) {
+            if (dsList.length > 0) {
+                dsUsedBadge.innerHTML = `<span class="used-label">Used:</span> ${dsList.join(', ')}`;
+                dsUsedBadge.style.display = 'block';
+            } else {
+                dsUsedBadge.style.display = 'none';
+            }
+        }
+
+        // Trie-based autocomplete when typing
+        chatInput.addEventListener('input', e => {
+            showSuggestions(chatInput.value);
+        });
+
+        chatInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                hideSuggestions();
+                sendMessage();
+            } else if (e.key === 'Escape') {
+                hideSuggestions();
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.input-wrapper')) {
+                hideSuggestions();
+            }
+        });
+    </script>
+</body>
+
+</html>

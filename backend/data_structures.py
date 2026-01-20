@@ -1,7 +1,7 @@
 """
 Data Structures Module for E-Commerce Customer Support Chatbot
 
-This module contains 7 core data structure implementations:
+This module contains 10 core data structure implementations:
 1. Trie - Auto-complete suggestions
 2. HashMap (FAQHashMap) - O(1) FAQ lookups  
 3. DecisionTree - Conversation flow with branching
@@ -9,9 +9,16 @@ This module contains 7 core data structure implementations:
 5. UnionFind - Synonym intent grouping
 6. WeightedGraph - Next best action suggestions
 7. OrderDatabase - O(1) order lookup by ID
+8. UserProfile - HashMap + Stack for profile management
+9. ShoppingCart - HashMap + Stack for cart with undo
+10. Wishlist - HashMap for O(1) contains check
+11. PriorityQueue - Heap for product recommendations
+12. RecentlyViewedList - Doubly Linked List for browsing history
+13. CheckoutQueue - FIFO Queue for checkout process
 
 Author: Smart Customer Support System
 """
+
 
 from typing import Dict, Any, List, Optional, Tuple
 from collections import deque
@@ -794,3 +801,798 @@ class OrderDatabase:
     def size(self) -> int:
         """Return number of orders."""
         return len(self.get_all_order_ids())
+
+
+# =============================================================================
+# DATA STRUCTURE 8: USER PROFILE (HashMap + Stack)
+# =============================================================================
+
+class UserProfile:
+    """
+    User Profile with navigation history.
+    
+    DATA STRUCTURES USED:
+    - HashMap (dict): Store user profile data with O(1) access
+    - Stack (list): Track profile view history for navigation
+    
+    WHY THESE DATA STRUCTURES:
+    1. HashMap for instant profile field access
+    2. Stack for "back" navigation through profile sections
+    """
+    
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        # HashMap for profile data
+        self._profile: Dict[str, Any] = {
+            "user_id": user_id,
+            "name": "Demo User",
+            "email": "demo@example.com",
+            "phone": "+1-555-0123",
+            "member_since": "2025-01-01",
+            "membership_tier": "Gold",
+            "addresses": [
+                {
+                    "type": "Home",
+                    "street": "123 Main Street",
+                    "city": "New York",
+                    "state": "NY",
+                    "zip": "10001"
+                },
+                {
+                    "type": "Work",
+                    "street": "456 Business Ave",
+                    "city": "New York",
+                    "state": "NY",
+                    "zip": "10002"
+                }
+            ],
+            "payment_methods": [
+                {"type": "Visa", "last_four": "4242", "default": True},
+                {"type": "PayPal", "email": "demo@example.com", "default": False}
+            ],
+            "preferences": {
+                "notifications": True,
+                "newsletter": True,
+                "language": "English"
+            }
+        }
+        # Stack for navigation history
+        self._view_history: List[str] = []
+    
+    def get_profile(self) -> Dict[str, Any]:
+        """Get full profile. O(1)."""
+        return self._profile.copy()
+    
+    def get_field(self, field: str) -> Any:
+        """Get specific field. O(1)."""
+        return self._profile.get(field)
+    
+    def update_field(self, field: str, value: Any) -> bool:
+        """Update profile field. O(1)."""
+        if field in self._profile:
+            self._profile[field] = value
+            return True
+        return False
+    
+    def push_view(self, section: str) -> None:
+        """Record section view in history. O(1)."""
+        self._view_history.append(section)
+        # Limit history size
+        if len(self._view_history) > 10:
+            self._view_history.pop(0)
+    
+    def pop_view(self) -> Optional[str]:
+        """Go back to previous section. O(1)."""
+        if self._view_history:
+            return self._view_history.pop()
+        return None
+    
+    def get_view_history(self) -> List[str]:
+        """Get navigation history."""
+        return list(self._view_history)
+    
+    def format_profile_summary(self) -> str:
+        """Format profile as readable summary."""
+        p = self._profile
+        addresses_str = "\n".join([
+            f"  • {addr['type']}: {addr['street']}, {addr['city']}, {addr['state']} {addr['zip']}"
+            for addr in p.get("addresses", [])
+        ])
+        payments_str = "\n".join([
+            f"  • {pm['type']} {'(Default)' if pm.get('default') else ''}"
+            for pm in p.get("payment_methods", [])
+        ])
+        
+        return f"""**Your Profile**
+
+**Name:** {p.get('name', 'N/A')}
+**Email:** {p.get('email', 'N/A')}
+**Phone:** {p.get('phone', 'N/A')}
+**Member Since:** {p.get('member_since', 'N/A')}
+**Tier:** {p.get('membership_tier', 'Standard')}
+
+**Saved Addresses:**
+{addresses_str}
+
+**Payment Methods:**
+{payments_str}"""
+
+
+# =============================================================================
+# DATA STRUCTURE 9: SHOPPING CART (HashMap + Stack)
+# =============================================================================
+
+class ShoppingCart:
+    """
+    Shopping Cart with undo functionality.
+    
+    DATA STRUCTURES USED:
+    - HashMap (dict): Store cart items with product_id as key - O(1) operations
+    - Stack (list): Track actions for undo functionality - O(1) push/pop
+    
+    WHY THESE DATA STRUCTURES:
+    1. HashMap for instant add/remove/update by product ID
+    2. Stack for undo - last action can be reversed (LIFO)
+    """
+    
+    def __init__(self):
+        # HashMap: product_id -> {name, price, quantity}
+        self._items: Dict[str, Dict[str, Any]] = {}
+        # Stack: action history for undo
+        self._action_history: List[Dict[str, Any]] = []
+        # Sample products catalog
+        self._products: Dict[str, Dict[str, Any]] = {
+            "PROD-001": {"name": "Wireless Headphones", "price": 79.99},
+            "PROD-002": {"name": "Phone Case", "price": 19.99},
+            "PROD-003": {"name": "Laptop Stand", "price": 49.99},
+            "PROD-004": {"name": "USB-C Hub", "price": 39.99},
+            "PROD-005": {"name": "Webcam HD", "price": 69.99},
+            "PROD-006": {"name": "Mechanical Keyboard", "price": 129.99},
+            "PROD-007": {"name": "Gaming Mouse", "price": 59.99},
+            "PROD-008": {"name": "Monitor Light Bar", "price": 45.99},
+            "PROD-009": {"name": "Desk Mat", "price": 24.99},
+            "PROD-010": {"name": "Cable Management Kit", "price": 15.99}
+        }
+    
+    def add_item(self, product_id: str, quantity: int = 1) -> Dict[str, Any]:
+        """Add item to cart. O(1)."""
+        product_id = product_id.upper()
+        
+        if product_id not in self._products:
+            return {"success": False, "error": "Product not found"}
+        
+        product = self._products[product_id]
+        
+        if product_id in self._items:
+            old_qty = self._items[product_id]["quantity"]
+            self._items[product_id]["quantity"] += quantity
+            # Record for undo
+            self._action_history.append({
+                "action": "add",
+                "product_id": product_id,
+                "quantity": quantity,
+                "was_new": False,
+                "old_quantity": old_qty
+            })
+        else:
+            self._items[product_id] = {
+                "name": product["name"],
+                "price": product["price"],
+                "quantity": quantity
+            }
+            self._action_history.append({
+                "action": "add",
+                "product_id": product_id,
+                "quantity": quantity,
+                "was_new": True
+            })
+        
+        return {
+            "success": True,
+            "message": f"Added {quantity}x {product['name']} to cart",
+            "item": self._items[product_id]
+        }
+    
+    def remove_item(self, product_id: str) -> Dict[str, Any]:
+        """Remove item from cart. O(1)."""
+        product_id = product_id.upper()
+        
+        if product_id not in self._items:
+            return {"success": False, "error": "Item not in cart"}
+        
+        removed_item = self._items.pop(product_id)
+        self._action_history.append({
+            "action": "remove",
+            "product_id": product_id,
+            "item": removed_item
+        })
+        
+        return {
+            "success": True,
+            "message": f"Removed {removed_item['name']} from cart"
+        }
+    
+    def undo(self) -> Dict[str, Any]:
+        """Undo last cart action. O(1)."""
+        if not self._action_history:
+            return {"success": False, "error": "Nothing to undo"}
+        
+        last_action = self._action_history.pop()
+        
+        if last_action["action"] == "add":
+            if last_action.get("was_new"):
+                # Remove the item completely
+                self._items.pop(last_action["product_id"], None)
+                return {"success": True, "message": f"Undid: Removed newly added item"}
+            else:
+                # Restore old quantity
+                self._items[last_action["product_id"]]["quantity"] = last_action["old_quantity"]
+                return {"success": True, "message": f"Undid: Restored previous quantity"}
+        
+        elif last_action["action"] == "remove":
+            # Re-add the removed item
+            self._items[last_action["product_id"]] = last_action["item"]
+            return {"success": True, "message": f"Undid: Restored {last_action['item']['name']}"}
+        
+        return {"success": False, "error": "Unknown action"}
+    
+    def get_cart(self) -> Dict[str, Any]:
+        """Get cart contents. O(n) where n = items."""
+        items = list(self._items.values())
+        total = sum(item["price"] * item["quantity"] for item in items)
+        
+        return {
+            "items": items,
+            "item_count": len(items),
+            "total": round(total, 2),
+            "can_undo": len(self._action_history) > 0
+        }
+    
+    def clear(self) -> None:
+        """Clear cart."""
+        self._items.clear()
+        self._action_history.clear()
+    
+    def get_products(self) -> Dict[str, Dict[str, Any]]:
+        """Get available products catalog."""
+        return self._products.copy()
+    
+    def format_cart(self) -> str:
+        """Format cart as readable string."""
+        cart = self.get_cart()
+        
+        if not cart["items"]:
+            return "**Your Shopping Cart**\n\nYour cart is empty.\n\nTry adding items with: 'add [product name]'"
+        
+        items_str = "\n".join([
+            f"• {item['name']} x{item['quantity']} - ${item['price'] * item['quantity']:.2f}"
+            for item in cart["items"]
+        ])
+        
+        undo_hint = "\n\n💡 Type 'undo' to reverse your last action" if cart["can_undo"] else ""
+        
+        return f"""**Your Shopping Cart**
+
+{items_str}
+
+**Total:** ${cart['total']:.2f}
+**Items:** {cart['item_count']}{undo_hint}"""
+
+
+# =============================================================================
+# DATA STRUCTURE 10: WISHLIST (HashMap + Trie integration)
+# =============================================================================
+
+class Wishlist:
+    """
+    Wishlist with product search integration.
+    
+    DATA STRUCTURES USED:
+    - HashMap (dict): Store unique wishlist items - O(1) add/remove/check
+    - Integrates with Trie: Auto-complete product names when searching
+    
+    WHY THESE DATA STRUCTURES:
+    1. HashMap for O(1) contains check - "Is this item in my wishlist?"
+    2. Trie integration for product name suggestions
+    """
+    
+    def __init__(self):
+        # HashMap: product_id -> product details
+        self._items: Dict[str, Dict[str, Any]] = {}
+        # Sample products (shared with cart)
+        self._products: Dict[str, Dict[str, Any]] = {
+            "PROD-001": {"name": "Wireless Headphones", "price": 79.99, "category": "Electronics"},
+            "PROD-002": {"name": "Phone Case", "price": 19.99, "category": "Accessories"},
+            "PROD-003": {"name": "Laptop Stand", "price": 49.99, "category": "Office"},
+            "PROD-004": {"name": "USB-C Hub", "price": 39.99, "category": "Electronics"},
+            "PROD-005": {"name": "Webcam HD", "price": 69.99, "category": "Electronics"},
+            "PROD-006": {"name": "Mechanical Keyboard", "price": 129.99, "category": "Electronics"},
+            "PROD-007": {"name": "Gaming Mouse", "price": 59.99, "category": "Electronics"},
+            "PROD-008": {"name": "Monitor Light Bar", "price": 45.99, "category": "Office"},
+            "PROD-009": {"name": "Desk Mat", "price": 24.99, "category": "Office"},
+            "PROD-010": {"name": "Cable Management Kit", "price": 15.99, "category": "Office"}
+        }
+    
+    def add(self, product_id: str) -> Dict[str, Any]:
+        """Add to wishlist. O(1)."""
+        product_id = product_id.upper()
+        
+        if product_id not in self._products:
+            return {"success": False, "error": "Product not found"}
+        
+        if product_id in self._items:
+            return {"success": False, "error": "Already in wishlist"}
+        
+        product = self._products[product_id]
+        self._items[product_id] = {
+            "product_id": product_id,
+            "name": product["name"],
+            "price": product["price"],
+            "category": product["category"]
+        }
+        
+        return {
+            "success": True,
+            "message": f"Added '{product['name']}' to wishlist"
+        }
+    
+    def remove(self, product_id: str) -> Dict[str, Any]:
+        """Remove from wishlist. O(1)."""
+        product_id = product_id.upper()
+        
+        if product_id not in self._items:
+            return {"success": False, "error": "Item not in wishlist"}
+        
+        removed = self._items.pop(product_id)
+        return {
+            "success": True,
+            "message": f"Removed '{removed['name']}' from wishlist"
+        }
+    
+    def contains(self, product_id: str) -> bool:
+        """Check if in wishlist. O(1)."""
+        return product_id.upper() in self._items
+    
+    def get_items(self) -> List[Dict[str, Any]]:
+        """Get all wishlist items."""
+        return list(self._items.values())
+    
+    def size(self) -> int:
+        """Get wishlist size."""
+        return len(self._items)
+    
+    def find_by_name(self, name: str) -> Optional[str]:
+        """Find product ID by name (case-insensitive). O(n)."""
+        name_lower = name.lower()
+        for pid, product in self._products.items():
+            if name_lower in product["name"].lower():
+                return pid
+        return None
+    
+    def get_products(self) -> Dict[str, Dict[str, Any]]:
+        """Get all available products."""
+        return self._products.copy()
+    
+    def format_wishlist(self) -> str:
+        """Format wishlist as readable string."""
+        items = self.get_items()
+        
+        if not items:
+            return "**Your Wishlist**\n\n❤️ Your wishlist is empty.\n\nAdd items with: 'add to wishlist [product]'"
+        
+        items_str = "\n".join([
+            f"• {item['name']} - ${item['price']:.2f} ({item['category']})"
+            for item in items
+        ])
+        return f"""**Your Wishlist** ❤️
+
+{items_str}
+
+**Total Items:** {len(items)}
+
+💡 Say 'move to cart [product]' to add to your cart"""
+
+
+# =============================================================================
+# DATA STRUCTURE 11: PRIORITY QUEUE (HEAP) - Product Recommendations
+# =============================================================================
+
+class ProductRecommendationQueue:
+    """
+    Priority Queue (Min-Heap) for product recommendations.
+    
+    DATA STRUCTURE: Binary Heap (via Python heapq)
+    
+    WHY PRIORITY QUEUE FOR RECOMMENDATIONS:
+    1. Always get the highest relevance products in O(1)
+    2. Insert new recommendations in O(log n)
+    3. Maintains sorted order automatically
+    
+    EXAMPLE:
+    Products scored by relevance → Heap keeps top items accessible
+    
+    OPERATIONS:
+    - push(): O(log n) - Add product with relevance score
+    - pop(): O(log n) - Get highest relevance product
+    - peek(): O(1) - View top product without removing
+    - get_top_k(): O(k log n) - Get k best recommendations
+    """
+    
+    def __init__(self):
+        # Using negative scores for max-heap behavior
+        self._heap: List[Tuple[float, str, Dict[str, Any]]] = []
+        self._products: Dict[str, Dict[str, Any]] = {}
+    
+    def push(self, product_id: str, relevance_score: float, product_data: Dict[str, Any]) -> None:
+        """
+        Add product with relevance score. O(log n).
+        
+        Args:
+            product_id: Unique product identifier
+            relevance_score: Higher = more relevant (0.0 to 1.0)
+            product_data: Product details
+        """
+        # Negate score for max-heap behavior (heapq is min-heap)
+        heapq.heappush(self._heap, (-relevance_score, product_id, product_data))
+        self._products[product_id] = {
+            "score": relevance_score,
+            "data": product_data
+        }
+    
+    def pop(self) -> Optional[Dict[str, Any]]:
+        """
+        Get and remove highest relevance product. O(log n).
+        
+        Returns:
+            Product data with score, or None if empty
+        """
+        if not self._heap:
+            return None
+        
+        neg_score, product_id, product_data = heapq.heappop(self._heap)
+        self._products.pop(product_id, None)
+        
+        return {
+            "product_id": product_id,
+            "relevance_score": -neg_score,
+            "data": product_data
+        }
+    
+    def peek(self) -> Optional[Dict[str, Any]]:
+        """View top product without removing. O(1)."""
+        if not self._heap:
+            return None
+        
+        neg_score, product_id, product_data = self._heap[0]
+        return {
+            "product_id": product_id,
+            "relevance_score": -neg_score,
+            "data": product_data
+        }
+    
+    def get_top_k(self, k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Get top k recommendations. O(k log n).
+        
+        Note: Does not remove items from queue.
+        """
+        # Sort and take top k
+        sorted_items = sorted(self._heap, key=lambda x: x[0])[:k]
+        
+        return [
+            {
+                "product_id": item[1],
+                "relevance_score": -item[0],
+                "data": item[2]
+            }
+            for item in sorted_items
+        ]
+    
+    def update_score(self, product_id: str, new_score: float) -> bool:
+        """
+        Update relevance score for a product. O(n) rebuild.
+        
+        In production, would use decrease-key operation.
+        """
+        if product_id not in self._products:
+            return False
+        
+        # Rebuild heap (simple approach)
+        old_data = self._products[product_id]["data"]
+        self._heap = [(s, pid, d) for s, pid, d in self._heap if pid != product_id]
+        heapq.heapify(self._heap)
+        self.push(product_id, new_score, old_data)
+        return True
+    
+    def size(self) -> int:
+        """Return number of items in queue."""
+        return len(self._heap)
+    
+    def is_empty(self) -> bool:
+        """Check if queue is empty."""
+        return len(self._heap) == 0
+
+
+# =============================================================================
+# DATA STRUCTURE 12: DOUBLY LINKED LIST - Recently Viewed Products
+# =============================================================================
+
+class ListNode:
+    """Node for Doubly Linked List."""
+    
+    def __init__(self, data: Dict[str, Any]):
+        self.data = data
+        self.prev: Optional['ListNode'] = None
+        self.next: Optional['ListNode'] = None
+
+
+class RecentlyViewedList:
+    """
+    Doubly Linked List for recently viewed products.
+    
+    DATA STRUCTURE: Doubly Linked List with HashMap for O(1) lookup
+    
+    WHY DOUBLY LINKED LIST FOR RECENTLY VIEWED:
+    1. O(1) add to front (most recent)
+    2. O(1) remove from back (oldest)
+    3. O(1) move existing item to front
+    4. Supports prev/next navigation
+    
+    EXAMPLE:
+    User views: A → B → C → A
+    List becomes: A ↔ C ↔ B (A moved to front)
+    
+    OPERATIONS:
+    - add_to_front(): O(1) - Add/move item to front
+    - remove_oldest(): O(1) - Remove from back
+    - get_all(): O(n) - Get all items in order
+    """
+    
+    def __init__(self, max_size: int = 10):
+        self._head: Optional[ListNode] = None
+        self._tail: Optional[ListNode] = None
+        self._lookup: Dict[str, ListNode] = {}  # HashMap for O(1) access
+        self._size: int = 0
+        self._max_size: int = max_size
+    
+    def add_to_front(self, product_id: str, product_data: Dict[str, Any]) -> None:
+        """
+        Add product to front (most recent). O(1).
+        
+        If product already exists, moves it to front.
+        If at capacity, removes oldest item.
+        """
+        # If already exists, remove it first
+        if product_id in self._lookup:
+            self._remove_node(self._lookup[product_id])
+        
+        # Create new node
+        new_node = ListNode({"product_id": product_id, **product_data})
+        self._lookup[product_id] = new_node
+        
+        # Add to front
+        if not self._head:
+            self._head = self._tail = new_node
+        else:
+            new_node.next = self._head
+            self._head.prev = new_node
+            self._head = new_node
+        
+        self._size += 1
+        
+        # Remove oldest if over capacity
+        if self._size > self._max_size:
+            self.remove_oldest()
+    
+    def remove_oldest(self) -> Optional[Dict[str, Any]]:
+        """Remove and return oldest item (from tail). O(1)."""
+        if not self._tail:
+            return None
+        
+        removed = self._tail
+        removed_data = removed.data
+        product_id = removed_data.get("product_id")
+        
+        self._remove_node(removed)
+        self._lookup.pop(product_id, None)
+        
+        return removed_data
+    
+    def _remove_node(self, node: ListNode) -> None:
+        """Internal: Remove a node from the list. O(1)."""
+        if node.prev:
+            node.prev.next = node.next
+        else:
+            self._head = node.next
+        
+        if node.next:
+            node.next.prev = node.prev
+        else:
+            self._tail = node.prev
+        
+        self._size -= 1
+    
+    def get_all(self) -> List[Dict[str, Any]]:
+        """Get all items from most to least recent. O(n)."""
+        items = []
+        current = self._head
+        while current:
+            items.append(current.data)
+            current = current.next
+        return items
+    
+    def get_item(self, product_id: str) -> Optional[Dict[str, Any]]:
+        """Get item by product ID. O(1)."""
+        node = self._lookup.get(product_id)
+        return node.data if node else None
+    
+    def contains(self, product_id: str) -> bool:
+        """Check if product is in list. O(1)."""
+        return product_id in self._lookup
+    
+    def size(self) -> int:
+        """Return number of items."""
+        return self._size
+    
+    def clear(self) -> None:
+        """Clear all items."""
+        self._head = None
+        self._tail = None
+        self._lookup.clear()
+        self._size = 0
+
+
+# =============================================================================
+# DATA STRUCTURE 13: QUEUE (FIFO) - Checkout Process
+# =============================================================================
+
+class CheckoutQueue:
+    """
+    FIFO Queue for checkout process simulation.
+    
+    DATA STRUCTURE: Queue (via collections.deque)
+    
+    WHY QUEUE FOR CHECKOUT:
+    1. Steps must be completed in order (FIFO)
+    2. O(1) enqueue and dequeue operations
+    3. Models real checkout flow: Cart → Shipping → Payment → Confirm
+    
+    EXAMPLE:
+    enqueue("cart_review") → enqueue("shipping") → enqueue("payment") → ...
+    dequeue() returns each step in order
+    
+    OPERATIONS:
+    - enqueue(): O(1) - Add step to queue
+    - dequeue(): O(1) - Get next step
+    - peek(): O(1) - View next step without removing
+    """
+    
+    # Standard checkout steps
+    CHECKOUT_STEPS = [
+        {"step": 1, "name": "cart_review", "label": "Cart Review"},
+        {"step": 2, "name": "shipping", "label": "Shipping Address"},
+        {"step": 3, "name": "payment", "label": "Payment Method"},
+        {"step": 4, "name": "confirmation", "label": "Order Confirmation"}
+    ]
+    
+    def __init__(self):
+        self._queue: deque = deque()
+        self._current_step: int = 0
+        self._completed_steps: List[Dict[str, Any]] = []
+        self._order_data: Dict[str, Any] = {}
+    
+    def start_checkout(self, cart_items: List[Dict[str, Any]], 
+                       total: float) -> Dict[str, Any]:
+        """
+        Initialize checkout with cart data. O(k) where k = steps.
+        
+        Args:
+            cart_items: List of items in cart
+            total: Cart total
+            
+        Returns:
+            First step data
+        """
+        self._queue.clear()
+        self._completed_steps.clear()
+        self._current_step = 0
+        self._order_data = {
+            "items": cart_items,
+            "total": total,
+            "started_at": None,  # Would be timestamp
+            "status": "in_progress"
+        }
+        
+        # Enqueue all steps
+        for step in self.CHECKOUT_STEPS:
+            self._queue.append(step.copy())
+        
+        return self.get_current_step()
+    
+    def get_current_step(self) -> Optional[Dict[str, Any]]:
+        """View current step without advancing. O(1)."""
+        if not self._queue:
+            return None
+        return self._queue[0]
+    
+    def complete_current_step(self, step_data: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """
+        Complete current step and move to next. O(1).
+        
+        Args:
+            step_data: Any data collected in this step
+            
+        Returns:
+            Next step data, or completion confirmation
+        """
+        if not self._queue:
+            return None
+        
+        # Dequeue current step
+        completed = self._queue.popleft()
+        completed["completed"] = True
+        completed["data"] = step_data or {}
+        self._completed_steps.append(completed)
+        self._current_step += 1
+        
+        # Check if checkout complete
+        if not self._queue:
+            self._order_data["status"] = "completed"
+            return {
+                "complete": True,
+                "order_data": self._order_data,
+                "steps_completed": len(self._completed_steps)
+            }
+        
+        return self.get_current_step()
+    
+    def go_back(self) -> Optional[Dict[str, Any]]:
+        """
+        Go back to previous step. O(1).
+        
+        Re-enqueues the last completed step at the front.
+        """
+        if not self._completed_steps:
+            return None
+        
+        # Pop last completed step
+        last_step = self._completed_steps.pop()
+        last_step.pop("completed", None)
+        last_step.pop("data", None)
+        
+        # Add back to front of queue
+        self._queue.appendleft(last_step)
+        self._current_step -= 1
+        
+        return self.get_current_step()
+    
+    def get_progress(self) -> Dict[str, Any]:
+        """Get checkout progress. O(1)."""
+        total_steps = len(self.CHECKOUT_STEPS)
+        completed = len(self._completed_steps)
+        
+        return {
+            "current_step": self._current_step + 1,
+            "total_steps": total_steps,
+            "completed": completed,
+            "remaining": total_steps - completed,
+            "percentage": round((completed / total_steps) * 100) if total_steps > 0 else 0
+        }
+    
+    def cancel_checkout(self) -> Dict[str, Any]:
+        """Cancel checkout and clear queue."""
+        self._queue.clear()
+        self._order_data["status"] = "cancelled"
+        
+        return {
+            "cancelled": True,
+            "steps_completed": len(self._completed_steps)
+        }
+    
+    def size(self) -> int:
+        """Return number of remaining steps."""
+        return len(self._queue)
+    
+    def is_empty(self) -> bool:
+        """Check if checkout is complete (no more steps)."""
+        return len(self._queue) == 0
