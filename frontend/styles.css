@@ -424,11 +424,9 @@ body.chatbot-page {
     }
 }
 
-border-color: var(--accent-primary);
-color: var(--accent-primary);
-}
 
-.wish-btn.active {
+
+.wish-btn-card.active {
     background: #fef2f2;
     border-color: #f87171;
     color: #ef4444;
@@ -450,6 +448,22 @@ color: var(--accent-primary);
     padding: 14px 16px;
     background: var(--bg-color);
     border-radius: var(--radius-sm);
+}
+
+.recent-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.recent-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 4px;
 }
 
 .recommend-row .score {

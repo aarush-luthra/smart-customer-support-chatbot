@@ -25,7 +25,8 @@ from backend.data_structures import (
     OrderDatabase,
     UserProfile,
     ShoppingCart,
-    Wishlist
+    Wishlist,
+    ProductRecommendationQueue
 )
 
 
@@ -70,6 +71,10 @@ class SupportEngine:
         self._build_decision_tree()
         self._setup_intent_groups()
         self._build_action_graph()
+        
+        # Recommendations
+        self._recommendation_queue = ProductRecommendationQueue()
+        self._initialize_recommendations()
     
     def _get_user_stack(self, user_id: str) -> ConversationStack:
         """Get or create stack for user."""
@@ -1611,9 +1616,76 @@ class SupportEngine:
             "data_structures": [
                 "Trie", "HashMap", "Decision Tree", 
                 "Stack", "Union-Find", "Weighted Graph",
-                "OrderDatabase"
+                "OrderDatabase", "Priority Queue"
             ]
         }
+
+    def _initialize_recommendations(self):
+        """Initialize recommendation queue with default scores."""
+        # Initial products with base scores
+        products = [
+            {"id": "PROD-001", "name": "Wireless Headphones", "price": 6499, "score": 0.85},
+            {"id": "PROD-002", "name": "Phone Case", "price": 1499, "score": 0.75},
+            {"id": "PROD-003", "name": "Laptop Stand", "price": 3999, "score": 0.80},
+            {"id": "PROD-004", "name": "USB-C Hub", "price": 2999, "score": 0.70},
+            {"id": "PROD-005", "name": "Webcam HD", "price": 5499, "score": 0.78},
+            {"id": "PROD-006", "name": "Mechanical Keyboard", "price": 9999, "score": 0.88}
+        ]
+        
+        for p in products:
+            self._recommendation_queue.push(
+                p["id"], 
+                p["score"], 
+                {"name": p["name"], "price": p["price"]}
+            )
+
+    def record_product_click(self, product_id: str) -> Dict[str, Any]:
+        """
+        Record a product view/click and update its recommendation score.
+        
+        DATA STRUCTURE: Priority Queue (Update operation)
+        """
+        # Find current score logic would ideally be O(1) if we had a parallel hashmap
+        # Check if product exists in our queue
+        # For this demo, we can just update blindly or search.
+        # But wait, ProductRecommendationQueue has internal _products map!
+        
+        # Access internal map for efficient lookup (simulated)
+        if product_id not in self._recommendation_queue._products:
+            return {"success": False, "error": "Product not found"}
+            
+        current_data = self._recommendation_queue._products[product_id]
+        current_score = current_data["score"]
+        
+        # Increase score by 0.05 (5%), max 0.99
+        new_score = min(0.99, current_score + 0.05)
+        
+        self._recommendation_queue.update_score(product_id, new_score)
+        
+        return {
+            "success": True,
+            "product_id": product_id,
+            "new_score": new_score,
+            "display_score": f"{int(new_score * 100)}%"
+        }
+
+    def get_recommendations(self, limit: int = 4) -> List[Dict[str, Any]]:
+        """
+        Get top recommendations from Priority Queue.
+        
+        DATA STRUCTURE: Priority Queue (Pop/Peek)
+        """
+        top_items = self._recommendation_queue.get_top_k(limit)
+        
+        results = []
+        for item in top_items:
+            results.append({
+                "id": item["product_id"],
+                "name": item["data"]["name"],
+                "price": item["data"]["price"],
+                "score": int(item["relevance_score"] * 100)
+            })
+        return results
 
 
 # Global engine instance

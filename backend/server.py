@@ -100,6 +100,11 @@ class SupportHandler(BaseHTTPRequestHandler):
             # Get system statistics
             result = engine.get_system_stats()
             self._send_json(result)
+            
+        elif path == "/api/recommendations":
+            # Get real-time recommendations from Priority Queue
+            result = engine.get_recommendations()
+            self._send_json(result)
         
         else:
             self._send_404()
@@ -133,6 +138,15 @@ class SupportHandler(BaseHTTPRequestHandler):
             user_id = data.get("user_id", "default_user")
             result = engine.reset_conversation(user_id)
             self._send_json(result)
+            
+        elif path == "/api/click":
+            # Record product click and update Priority Queue
+            product_id = data.get("product_id")
+            if product_id:
+                result = engine.record_product_click(product_id)
+                self._send_json(result)
+            else:
+                self._send_error(400, "Missing product_id")
         
         else:
             self._send_404()

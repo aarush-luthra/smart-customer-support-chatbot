@@ -104,14 +104,29 @@ function renderProducts() {
     highlightDS('HashMap');
 }
 
-function viewProduct(id) {
+async function viewProduct(id) {
     const product = PRODUCTS.find(p => p.id === id);
     if (!product) return;
+    
+    // 1. Update Frontend History (Linked List)
     state.recentlyViewed = state.recentlyViewed.filter(p => p.id !== id);
     state.recentlyViewed.unshift(product);
     if (state.recentlyViewed.length > 4) state.recentlyViewed.pop();
     renderRecentlyViewed();
     highlightDS('Linked List');
+    
+    // 2. Notify Backend (Update Priority Queue)
+    try {
+        await fetch('/api/click', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: id })
+        });
+        // 3. Refresh Recommendations
+        fetchRecommendations();
+    } catch (e) {
+        console.error("Error tracking click:", e);
+    }
 }
 
 function renderRecentlyViewed() {
@@ -121,21 +136,41 @@ function renderRecentlyViewed() {
     }
     elements.recentlyViewed.innerHTML = state.recentlyViewed.map(p => `
         <div class="recent-row">
-            <span>${escapeHtml(p.name)}</span>
+            <div class="recent-left">
+                <img src="${p.image}" alt="${escapeHtml(p.name)}" class="recent-thumb">
+                <span>${escapeHtml(p.name)}</span>
+            </div>
             <span class="product-price">₹${p.price.toLocaleString('en-IN')}</span>
         </div>
     `).join('');
 }
 
-function renderRecommendations() {
-    const recs = [...PRODUCTS].map(p => ({ ...p, score: Math.floor(Math.random() * 30) + 70 }))
-        .sort((a, b) => b.score - a.score).slice(0, 4);
+async function fetchRecommendations() {
+    try {
+        const res = await fetch('/api/recommendations');
+        const recs = await res.json();
+        renderRecommendations(recs);
+    } catch (e) {
+        console.error("Error fetching recommendations:", e);
+        // Fallback to random if server fails
+        renderRecommendations([]); 
+    }
+}
+
+function renderRecommendations(recs = []) {
+    // If empty or fallback, generate fake ones (or just hide)
+    if (!recs || recs.length === 0) {
+       recs = [...PRODUCTS].map(p => ({ ...p, score: 70 + Math.floor(Math.random() * 20) }))
+           .sort((a, b) => b.score - a.score).slice(0, 4);
+    }
+
     elements.recommendationsList.innerHTML = recs.map(p => `
         <div class="recommend-row">
             <span>${escapeHtml(p.name)} - ₹${p.price.toLocaleString('en-IN')}</span>
             <span class="score">${p.score}%</span>
         </div>
     `).join('');
+    
     highlightDS('Priority Queue');
 }
 
@@ -349,7 +384,7 @@ function init() {
     console.log('ShopDS initialized');
     renderProducts();
     renderRecentlyViewed();
-    renderRecommendations();
+    fetchRecommendations();
     updateCartUI();
 }
 

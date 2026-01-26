@@ -15,6 +15,8 @@ The Trie stores keywords character by character. When you type "ord", it travers
 - Root → 'o' → 'r' → 'd'
 - Returns all words below: "order", "orders", "order status"
 
+
+
 ### Demo
 
 1. Type `ord` in the input field (don't press Enter)
@@ -37,6 +39,8 @@ The Trie stores keywords character by character. When you type "ord", it travers
 Keywords are hashed to bucket indices for O(1) average lookup:
 - `hash("pricing")` → Bucket 3 → Returns pricing info
 - `hash("shipping")` → Bucket 6 → Returns shipping info
+
+
 
 ### Demo
 
@@ -62,6 +66,8 @@ Keywords are hashed to bucket indices for O(1) average lookup:
 Each node represents a conversation state with defined options:
 - "Welcome" → user types "orders" → "Orders Menu"
 - "Orders Menu" → user types "track" → "Track Order"
+
+
 
 ### Demo
 
@@ -90,6 +96,8 @@ Every navigation pushes state onto the stack:
 3. Type "track": Stack = [root, orders, track]
 4. Type "back": Pop → Stack = [root, orders]
 
+
+
 ### Demo
 
 1. Navigate: `orders` → `track` → `cancel`
@@ -116,6 +124,8 @@ Multiple phrases map to the same canonical intent:
 - "cancel order" → find() → "cancel"
 
 All trigger the same cancel flow!
+
+
 
 ### Demo
 
@@ -151,6 +161,8 @@ Each state has outgoing edges with weights (probabilities):
 
 Top 3 are shown as clickable buttons!
 
+
+
 ### Demo
 
 1. Type `orders` → See Quick Action buttons
@@ -172,6 +184,8 @@ Each product view adds a node to the front (head) of the list. If the list excee
 - View C → [C] → [B] → [A]
 - View D → [D] → [C] → [B] → [A]
 
+
+
 ### Demo
 
 1. Click on several products in the main catalog.
@@ -187,6 +201,8 @@ Each product view adds a node to the front (head) of the list. If the list excee
 ### How It Works
 
 Products are assigned a score (e.g., 98%) and stored in a Max-Heap. The system always serves the highest-priority items to the UI.
+
+
 
 ### Demo
 
@@ -204,6 +220,8 @@ Products are assigned a score (e.g., 98%) and stored in a Max-Heap. The system a
 
 A FIFO (First-In, First-Out) flow ensures a logical sequence:
 `Cart` → `Shipping` → `Payment` → `Confirm`
+
+
 
 ### Demo
 
